@@ -1,0 +1,9 @@
+Limit  (cost=0.29..2.92 rows=21 width=115) (actual time=0.023..0.035 rows=21 loops=1)
+  Buffers: shared hit=4
+  ->  Index Scan using activity_team_created_id_idx on activity_events  (cost=0.29..630.25 rows=5012 width=115) (actual time=0.022..0.032 rows=21 loops=1)
+        Index Cond: ((team_id = '79113950-8305-4f31-99ff-f0d7e88a62ba'::uuid) AND (ROW(created_at, id) < ROW('2026-09-01 17:49:00+01'::timestamp with time zone, '5113'::bigint)))
+        Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.196 ms
+Execution Time: 0.081 ms

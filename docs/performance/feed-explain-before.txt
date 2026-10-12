@@ -1,0 +1,14 @@
+Limit  (cost=496.11..496.16 rows=21 width=115) (actual time=6.956..6.961 rows=21 loops=1)
+  Buffers: shared hit=184
+  ->  Sort  (cost=496.11..508.64 rows=5012 width=115) (actual time=6.953..6.956 rows=21 loops=1)
+        Sort Key: created_at DESC, id DESC
+        Sort Method: top-N heapsort  Memory: 30kB
+        Buffers: shared hit=184
+        ->  Seq Scan on activity_events  (cost=0.00..360.98 rows=5012 width=115) (actual time=0.019..4.445 rows=5049 loops=1)
+              Filter: ((team_id = '79113950-8305-4f31-99ff-f0d7e88a62ba'::uuid) AND (ROW(created_at, id) < ROW('2026-09-01 17:49:00+01'::timestamp with time zone, '5113'::bigint)))
+              Rows Removed by Filter: 5064
+              Buffers: shared hit=184
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.961 ms
+Execution Time: 7.010 ms

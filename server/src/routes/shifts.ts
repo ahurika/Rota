@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
 import { loadMembership, requirePermission } from '../middleware/rbac.js';
 import { shiftsRepository } from '../repositories/shiftsRepository.js';
+import { activityRepository } from '../repositories/activityRepository.js';
+import { dbForTeam } from '../db/shards.js';
 import { AppError } from '../lib/errors.js';
 import { TeamVariables } from './teams.js';
 
@@ -70,16 +72,42 @@ shiftsRouter.post(
       throw new AppError('VALIDATION_FAILED', 400, 'Shift endsAt must be after startsAt');
     }
 
-    const shift = await shiftsRepository.create({
-      teamId,
-      assigneeId: parsed.data.assigneeId,
-      startsAt,
-      endsAt,
-      label: parsed.data.label,
-      note: parsed.data.note,
-    });
+    const pool = await dbForTeam(teamId);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    return c.json({ shift }, 201);
+      const shift = await shiftsRepository.create(
+        {
+          teamId,
+          assigneeId: parsed.data.assigneeId,
+          startsAt,
+          endsAt,
+          label: parsed.data.label,
+          note: parsed.data.note,
+        },
+        client
+      );
+
+      await activityRepository.createEvent(
+        {
+          teamId,
+          type: 'shift_created',
+          actorId: c.get('userId'),
+          entityId: shift.id,
+          payload: { label: shift.label, startsAt: shift.starts_at, endsAt: shift.ends_at },
+        },
+        client
+      );
+
+      await client.query('COMMIT');
+      return c.json({ shift }, 201);
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 );
 
@@ -127,19 +155,48 @@ shiftsRouter.patch(
       throw new AppError('VALIDATION_FAILED', 400, 'Shift endsAt must be after startsAt');
     }
 
-    const shift = await shiftsRepository.updateShift(teamId, shiftId, {
-      assigneeId: parsed.data.assigneeId,
-      startsAt,
-      endsAt,
-      label: parsed.data.label,
-      note: parsed.data.note,
-    });
+    const pool = await dbForTeam(teamId);
+    const client = await pool.connect();
 
-    if (!shift) {
-      throw new AppError('NOT_FOUND', 404, 'Shift not found');
+    try {
+      await client.query('BEGIN');
+
+      const shift = await shiftsRepository.updateShift(
+        teamId,
+        shiftId,
+        {
+          assigneeId: parsed.data.assigneeId,
+          startsAt,
+          endsAt,
+          label: parsed.data.label,
+          note: parsed.data.note,
+        },
+        client
+      );
+
+      if (!shift) {
+        throw new AppError('NOT_FOUND', 404, 'Shift not found');
+      }
+
+      await activityRepository.createEvent(
+        {
+          teamId,
+          type: 'shift_updated',
+          actorId: c.get('userId'),
+          entityId: shift.id,
+          payload: { label: shift.label },
+        },
+        client
+      );
+
+      await client.query('COMMIT');
+      return c.json({ shift }, 200);
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
     }
-
-    return c.json({ shift }, 200);
   }
 );
 
@@ -153,11 +210,34 @@ shiftsRouter.delete(
     const teamId = c.req.param('teamId')!;
     const shiftId = c.req.param('shiftId')!;
 
-    const deleted = await shiftsRepository.deleteShift(teamId, shiftId);
-    if (!deleted) {
-      throw new AppError('NOT_FOUND', 404, 'Shift not found');
-    }
+    const pool = await dbForTeam(teamId);
+    const client = await pool.connect();
 
-    return c.json({ success: true }, 200);
+    try {
+      await client.query('BEGIN');
+
+      const deleted = await shiftsRepository.deleteShift(teamId, shiftId, client);
+      if (!deleted) {
+        throw new AppError('NOT_FOUND', 404, 'Shift not found');
+      }
+
+      await activityRepository.createEvent(
+        {
+          teamId,
+          type: 'shift_deleted',
+          actorId: c.get('userId'),
+          entityId: shiftId,
+        },
+        client
+      );
+
+      await client.query('COMMIT');
+      return c.json({ success: true }, 200);
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 );

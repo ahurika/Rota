@@ -1,3 +1,4 @@
+import pg from 'pg';
 import { dbForTeam } from '../db/shards.js';
 
 export interface ShiftRow {
@@ -12,16 +13,19 @@ export interface ShiftRow {
 }
 
 export const shiftsRepository = {
-  async create(params: {
-    teamId: string;
-    assigneeId?: string | null;
-    startsAt: Date;
-    endsAt: Date;
-    label: string;
-    note?: string | null;
-  }): Promise<ShiftRow> {
-    const pool = await dbForTeam(params.teamId);
-    const res = await pool.query<ShiftRow>(
+  async create(
+    params: {
+      teamId: string;
+      assigneeId?: string | null;
+      startsAt: Date;
+      endsAt: Date;
+      label: string;
+      note?: string | null;
+    },
+    client?: pg.PoolClient
+  ): Promise<ShiftRow> {
+    const executor = client ?? (await dbForTeam(params.teamId));
+    const res = await executor.query<ShiftRow>(
       `INSERT INTO shifts (team_id, assignee_id, starts_at, ends_at, label, note)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
@@ -37,9 +41,9 @@ export const shiftsRepository = {
     return res.rows[0];
   },
 
-  async findShift(teamId: string, shiftId: string): Promise<ShiftRow | null> {
-    const pool = await dbForTeam(teamId);
-    const res = await pool.query<ShiftRow>(
+  async findShift(teamId: string, shiftId: string, client?: pg.PoolClient): Promise<ShiftRow | null> {
+    const executor = client ?? (await dbForTeam(teamId));
+    const res = await executor.query<ShiftRow>(
       `SELECT * FROM shifts WHERE id = $1 AND team_id = $2 LIMIT 1`,
       [shiftId, teamId]
     );
@@ -70,10 +74,11 @@ export const shiftsRepository = {
       endsAt?: Date;
       label?: string;
       note?: string | null;
-    }
+    },
+    client?: pg.PoolClient
   ): Promise<ShiftRow | null> {
-    const pool = await dbForTeam(teamId);
-    const res = await pool.query<ShiftRow>(
+    const executor = client ?? (await dbForTeam(teamId));
+    const res = await executor.query<ShiftRow>(
       `UPDATE shifts
        SET assignee_id = COALESCE($3, assignee_id),
            starts_at = COALESCE($4, starts_at),
@@ -96,9 +101,9 @@ export const shiftsRepository = {
     return res.rows[0] ?? null;
   },
 
-  async deleteShift(teamId: string, shiftId: string): Promise<boolean> {
-    const pool = await dbForTeam(teamId);
-    const res = await pool.query(
+  async deleteShift(teamId: string, shiftId: string, client?: pg.PoolClient): Promise<boolean> {
+    const executor = client ?? (await dbForTeam(teamId));
+    const res = await executor.query(
       `DELETE FROM shifts WHERE id = $1 AND team_id = $2`,
       [shiftId, teamId]
     );

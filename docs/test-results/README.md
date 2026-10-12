@@ -12,7 +12,7 @@ This document tracks all 14 mandatory proof tests required by PRD Section 11.
 | T6 | Bad webhook signature gets 401 and creates nothing | Signature verification | Pending (M5) | - | - |
 | T7 | Same Idempotency-Key twice returns the same stored response | Idempotent payments | Pending (M5) | - | - |
 | T8 | Starter team cannot invite a sixth member | Seat limits | **PASSED** | 2026-10-12 | [T8.txt](T8.txt) |
-| T9 | Cursor pagination with inserts between pages | Feed correctness | Pending (M3) | - | - |
+| T9 | Cursor pagination with inserts between pages | Feed correctness | **PASSED** | 2026-10-12 | [T9.txt](T9.txt) |
 | T10 | Quiet hours worker test delays notification | Settings obeyed | Pending (M6) | - | - |
 | T11 | Ledger UPDATE and DELETE fail | Append-only ledger | Pending (M5) | - | - |
 | T12 | Rebuilding subscription state from ledger matches | Ledger integrity | Pending (M5) | - | - |

@@ -6,6 +6,8 @@ import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { teamsRouter, invitesRouter } from './routes/teams.js';
 import { shiftsRouter } from './routes/shifts.js';
+import { activityRouter } from './routes/activity.js';
+import { swapsRouter } from './routes/swaps.js';
 
 export type AppVariables = {
   requestId: string;
@@ -45,6 +47,8 @@ app.route('/v1/auth', authRouter);
 app.route('/v1/teams', teamsRouter);
 app.route('/v1/invites', invitesRouter);
 app.route('/v1/teams/:teamId/shifts', shiftsRouter);
+app.route('/v1/teams/:teamId/activity', activityRouter);
+app.route('/v1/teams/:teamId/swaps', swapsRouter);
 
 // Global 404 handler
 app.notFound((c) => {

@@ -1,0 +1,17 @@
+Proof Test T9: Activity Feed Cursor Pagination with Concurrent Inserts
+Ran on: 2026-10-12
+Command: npm run --workspace=server test -- feed_t9.test.ts
+
+> server@1.0.0 test
+> vitest run feed_t9.test.ts
+
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/feed_t9.test.ts (1 test) 298ms
+   ✓ Proof Test T9: Activity Feed Cursor Pagination with Concurrent Inserts > T9: Cursor pagination prevents skips and repeats under concurrent insertions and timestamp ties 296ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:35:36
+   Duration  1.53s (transform 285ms, setup 0ms, collect 749ms, tests 298ms, environment 0ms, prepare 141ms)

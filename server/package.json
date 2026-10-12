@@ -12,7 +12,7 @@
     "test:proration": "vitest run test/unit/proration.test.ts",
     "lint": "tsc --noEmit",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "echo \"db:seed placeholder\"",
+    "db:seed": "tsx src/db/seed.ts",
     "loadtest": "echo \"loadtest placeholder\""
   },
   "dependencies": {

@@ -9,6 +9,8 @@ export type ErrorCode =
   | 'VALIDATION_FAILED'
   | 'RATE_LIMITED'
   | 'BILLING_RESTRICTED'
+  | 'INVALID_CURSOR'
+  | 'SWAP_ALREADY_PENDING'
   | 'INTERNAL_SERVER_ERROR';
 
 export class AppError extends Error {
