@@ -1,0 +1,13 @@
+Proof Test T6: Webhook Cryptographic Verification (HMAC SHA-512)
+Command: npm run --workspace=server test billing_webhook_t5_t6
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/billing_webhook_t5_t6.test.ts (2 tests) 803ms
+   ✓ Proof Tests T5 & T6: Webhook Signature Verification and Idempotency > Proof Test T6: Bad or missing signature returns 401 and writes nothing to the database 328ms
+
+Verification:
+- Missing x-paystack-signature header returns 401 INVALID_SIGNATURE.
+- Tampered signature header returns 401 INVALID_SIGNATURE.
+- 0 rows inserted into webhook_events or ledger_entries.

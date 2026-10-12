@@ -54,6 +54,7 @@ export async function runMigrations(): Promise<void> {
   await applyMigration(primaryPool0, '002_shard_schema.sql', 'Database 0');
   await applyMigration(primaryPool0, '003_ledger_trigger.sql', 'Database 0');
   await applyMigration(primaryPool0, '004_activity_feed_index.sql', 'Database 0');
+  await applyMigration(primaryPool0, '005_billing_enhancements.sql', 'Database 0');
 
   // Database 1: Shard 1 tables only
   logger.info('--- Migrating Database 1 (Shard 1) ---');
@@ -61,6 +62,7 @@ export async function runMigrations(): Promise<void> {
   await applyMigration(primaryPool1, '002_shard_schema.sql', 'Database 1');
   await applyMigration(primaryPool1, '003_ledger_trigger.sql', 'Database 1');
   await applyMigration(primaryPool1, '004_activity_feed_index.sql', 'Database 1');
+  await applyMigration(primaryPool1, '005_billing_enhancements.sql', 'Database 1');
 
   logger.info('Database migrations completed successfully on all shards.');
 }

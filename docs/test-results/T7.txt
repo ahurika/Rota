@@ -1,0 +1,13 @@
+Proof Test T7: Idempotency-Key Header Handling
+Command: npm run --workspace=server test idempotency_t7
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/idempotency_t7.test.ts (1 test) 201ms
+   ✓ Proof Test T7: Idempotency Key Middleware Enforcement > T7: Same Idempotency-Key returns stored response; changed body returns 422 conflict 201ms
+
+Verification:
+- Repeated call with same Idempotency-Key and same body returns the identical stored response.
+- Database records exactly 1 payment_attempt.
+- Repeated call with same Idempotency-Key but different request payload returns 422 IDEMPOTENCY_CONFLICT.

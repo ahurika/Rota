@@ -1,0 +1,15 @@
+Proof Test T5: Webhook Idempotency (Same signed event 3 times)
+Command: npm run --workspace=server test billing_webhook_t5_t6
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/billing_webhook_t5_t6.test.ts (2 tests) 803ms
+   ✓ Proof Tests T5 & T6: Webhook Signature Verification and Idempotency > Proof Test T5: Same signed webhook received 3 times creates exactly one ledger row and one subscription change 470ms
+
+Database Verification:
+- Sent 3 concurrent webhooks with identical HMAC SHA-512 signature for reference att_<uuid>.
+- All three returned 200 OK.
+- Exactly 1 ledger_entries charge row inserted (idempotency_key = 'attempt:<uuid>').
+- Subscriptions row updated to plan 'team' and 15 seats.
+- Payment attempt updated to 'succeeded'.

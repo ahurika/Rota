@@ -1,0 +1,19 @@
+Proof Test T12: Subscription State Rebuilt From Ledger
+Command: npm run --workspace=server test ledger_t11_t12
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/ledger_t11_t12.test.ts (2 tests) 532ms
+   ✓ Proof Tests T11 & T12: Ledger Immutability and State Reconstruction > Proof Test T12: Subscription state rebuilds from the append-only ledger matching DB state 58ms
+
+Reconstruction Verification:
+- Replayed 3 sequential ledger entries (initial team upgrade, adding 5 seats, and upgrading to business).
+- rebuildSubscriptionFromLedger(teamId) returned:
+  {
+    teamId: '<uuid>',
+    plan: 'business',
+    seats: 40,
+    status: 'active'
+  }
+- Matches stored subscriptions PostgreSQL row with 100% precision.

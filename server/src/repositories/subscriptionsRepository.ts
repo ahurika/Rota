@@ -51,4 +51,45 @@ export const subscriptionsRepository = {
     );
     return res.rows[0] ?? null;
   },
+
+  async updatePlanAndSeats(
+    teamId: string,
+    plan: string,
+    seats: number,
+    client: pg.PoolClient
+  ): Promise<SubscriptionRow> {
+    const res = await client.query<SubscriptionRow>(
+      `UPDATE subscriptions
+       SET plan = $2, seats = $3, status = 'active', grace_ends_at = NULL, pending_plan = NULL, pending_seats = NULL, updated_at = now()
+       WHERE team_id = $1
+       RETURNING *`,
+      [teamId, plan, seats]
+    );
+    return res.rows[0];
+  },
+
+  async updatePendingChange(
+    teamId: string,
+    pendingPlan: string,
+    pendingSeats: number,
+    client: pg.PoolClient
+  ): Promise<SubscriptionRow> {
+    const res = await client.query<SubscriptionRow>(
+      `UPDATE subscriptions
+       SET pending_plan = $2, pending_seats = $3, updated_at = now()
+       WHERE team_id = $1
+       RETURNING *`,
+      [teamId, pendingPlan, pendingSeats]
+    );
+    return res.rows[0];
+  },
+
+  async clearPendingChange(teamId: string, client: pg.PoolClient): Promise<void> {
+    await client.query(
+      `UPDATE subscriptions
+       SET pending_plan = NULL, pending_seats = NULL, updated_at = now()
+       WHERE team_id = $1`,
+      [teamId]
+    );
+  },
 };

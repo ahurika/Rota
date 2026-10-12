@@ -1,0 +1,24 @@
+Proof Test T3: Proration Engine 14 Test Cases
+Command: npm run --workspace=server test proration_t3
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/unit/proration_t3.test.ts (14 tests) 34ms
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 1: Starter(5) to Team(5) with 20 days left produces charge 2000 cents
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 2: Team(15) adds 3 seats with 12 days left produces charge 360 cents ($3.60)
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 3: Team(5) to Starter(5) downgrade is scheduled for end of period with charge 0
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 4: Team 10 to 14 seats inside included seats produces immediate charge 0
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 5: Team 20 to 17 seats is scheduled with charge 0
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 6: Starter to Team on the first day charges full difference of 3000 cents
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 7: Starter to Team on the last day charges 1 day difference of 100 cents
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 8: Two sequential upgrades in one period (8a charge 2000, 8b charge 500)
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 9: Upgrade at day 10 charges 4667, then downgrade at day 20 schedules charge 0
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 10: Upgrade calculation is deterministic when moving from team to extra seats
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 11: Business(40) to Team(15) downgrade at day 5 is scheduled with charge 0
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 12: Floor each part separately pins exact rounding rule to 1634 cents (not 1633)
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 13: Accurately prorates across non-30-day periods (28 days -> 1500, 31 days -> 1548)
+   ✓ Proof Test T3: Proration Engine 14 Test Cases > Case 14: Rejects seats exceeding plan caps or below 1 with SEATS_OUT_OF_RANGE
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)

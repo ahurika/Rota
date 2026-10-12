@@ -1,0 +1,14 @@
+Proof Test T11: Ledger Immutability (UPDATE, DELETE, and TRUNCATE fail)
+Command: npm run --workspace=server test ledger_t11_t12
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/ledger_t11_t12.test.ts (2 tests) 532ms
+   ✓ Proof Tests T11 & T12: Ledger Immutability and State Reconstruction > Proof Test T11: UPDATE, DELETE, and TRUNCATE on ledger_entries fail via DB trigger 474ms
+
+Database Trigger Verification:
+- Attempting UPDATE on ledger_entries raises exception: 'Ledger entries are strictly append-only: UPDATE operations are prohibited'.
+- Attempting DELETE on ledger_entries raises exception: 'Ledger entries are strictly append-only: DELETE operations are prohibited'.
+- Attempting TRUNCATE on ledger_entries raises exception: 'Ledger entries are strictly append-only: TRUNCATE operations are prohibited'.
+- All records remain completely immutable in PostgreSQL.
