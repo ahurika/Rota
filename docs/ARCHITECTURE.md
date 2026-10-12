@@ -88,3 +88,26 @@ chargeCents = costCents - creditCents
 ### Webhook Security & Idempotency
 - **Cryptographic Verification**: Webhooks from Paystack are verified via HMAC SHA-512 against raw request text before parsing JSON, compared with constant-time equality `crypto.timingSafeEqual` (Proof Test T6).
 - **Idempotent Ingestion**: `webhook_events` enforces a unique constraint on `(provider, event_id)`. Duplicate webhook deliveries return 200 OK immediately without triggering duplicate ledger charges (Proof Test T5).
+
+---
+
+## 6. Push Notifications, Device Tokens, and Settings Synchronization
+
+### Asynchronous Notification Pipeline
+- **Producer / Worker Separation**: HTTP request handlers never send push notifications synchronously. Activity events and mutation handlers enqueue background notification jobs with `recipientUserId`, `title`, `body`, `category`, and `isUrgent`.
+- **Category Filtering**: Notifications check user-configured category toggles (`shift_changes`, `swaps`, `billing`) before dispatch. If a user disabled that category and the message is not urgent, delivery is skipped.
+
+### Quiet Hours Engine (Proof Test T10)
+- **Time Zone Aware**: Evaluated using Luxon against the recipient's configured IANA timezone (e.g. `Europe/London`, `America/New_York`).
+- **Deterministic Math**: Pure function `calculateQuietHoursDelay(now, quietStart, quietEnd, timezone)` computes exact delay milliseconds without side effects.
+- **Cross-Midnight Handling**: Properly handles intervals that cross midnight (e.g. 22:00 to 06:00) as well as daytime quiet hours (e.g. 13:00 to 15:00) and daylight saving transitions.
+- **Urgent Notification Exemption**: Messages marked with `isUrgent: true` (e.g., emergency cancellations or high-priority broadcasts) bypass quiet hours delays and deliver immediately.
+
+### Device Token Management & Receipt Handling (Proof Test T14)
+- **Expo Push Tokens**: Mobile devices register their Expo push tokens via `POST /v1/devices`, recording platform (`ios` | `android`) and optional `device_id`.
+- **Dead Token Cleanup**: Push tickets and receipts returned by Expo are inspected. When a receipt returns `status: 'error'` with `details.error === 'DeviceNotRegistered'`, the device row is immediately deleted from the database to prevent futile future delivery attempts.
+- **Logout Cleanup**: User logout triggers `DELETE /v1/devices/:id`, ensuring revoked devices no longer receive alerts.
+
+### Settings Synchronization & Conflict Resolution
+- **Field-Level Timestamps**: The `user_settings` table maintains independent `updated_at_*` timestamps for every configurable field (`updated_at_quiet_start`, `updated_at_quiet_end`, `updated_at_timezone`, `updated_at_notif_types`, `updated_at_language`, `updated_at_theme`).
+- **Conflict Resolution**: Last-write-to-arrive per field wins. If a client updates their `theme` offline while another client modifies `quietStart`, both updates merge cleanly without overwriting each other's independent modifications.

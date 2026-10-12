@@ -10,6 +10,8 @@ import { activityRouter } from './routes/activity.js';
 import { swapsRouter } from './routes/swaps.js';
 import { billingRouter } from './routes/billing.js';
 import { webhooksRouter } from './routes/webhooks.js';
+import { settingsRouter } from './routes/settings.js';
+import { devicesRouter } from './routes/devices.js';
 
 export type AppVariables = {
   requestId: string;
@@ -53,6 +55,8 @@ app.route('/v1/teams/:teamId/activity', activityRouter);
 app.route('/v1/teams/:teamId/swaps', swapsRouter);
 app.route('/v1', billingRouter);
 app.route('/v1', webhooksRouter);
+app.route('/v1/settings', settingsRouter);
+app.route('/v1/devices', devicesRouter);
 
 // Global 404 handler
 app.notFound((c) => {

@@ -5,13 +5,15 @@ import { loadMembership, requirePermission } from '../middleware/rbac.js';
 import { requireIdempotency } from '../middleware/idempotency.js';
 import { billingService } from '../services/billing/billingService.js';
 import { PlanId } from '../config/plans.js';
+import { TeamVariables } from './teams.js';
+import { usersRepository } from '../repositories/usersRepository.js';
 
 const changeSubscriptionSchema = z.object({
   plan: z.enum(['starter', 'team', 'business']),
   seats: z.number().int().min(1),
 }).strict();
 
-export const billingRouter = new Hono();
+export const billingRouter = new Hono<{ Variables: TeamVariables }>();
 
 // 1. Get current billing status
 billingRouter.get(
@@ -61,8 +63,9 @@ billingRouter.post(
   requireIdempotency,
   async (c) => {
     const teamId = c.req.param('teamId');
-    const userId = c.get('userId' as any) as string;
-    const userEmail = (c.get('userEmail' as any) as string) || 'user@example.com';
+    const userId = c.get('userId');
+    const user = await usersRepository.findById(userId);
+    const userEmail = user?.email || 'user@example.com';
     const idempotencyKey = c.req.header('idempotency-key') || c.req.header('Idempotency-Key')!;
 
     const body = await c.req.json();

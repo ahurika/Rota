@@ -1,0 +1,16 @@
+Proof Test T10: Quiet Hours Calculation Engine
+Command: npm run --workspace=server test quiet_hours_t10
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/unit/quiet_hours_t10.test.ts (6 tests) 36ms
+   ✓ Proof Test T10: Quiet Hours Calculation Engine > T10: 02:00 local time in Africa/Lagos is delayed until 06:00 local time 36ms
+   ✓ Proof Test T10: Quiet Hours Calculation Engine > Delays evening notification (22:30 local) to 06:00 the following morning
+   ✓ Proof Test T10: Quiet Hours Calculation Engine > Allows immediate sending outside quiet hours (09:00 local)
+   ✓ Proof Test T10: Quiet Hours Calculation Engine > Handles midday non-wrapping quiet hours (13:00 to 15:00)
+   ✓ Proof Test T10: Quiet Hours Calculation Engine > Calculates correctly in America/New_York (EDT UTC-4)
+   ✓ Proof Test T10: Quiet Hours Calculation Engine > Returns null when quiet hours are disabled (quietStart === quietEnd)
+
+Test Files  1 passed (1)
+     Tests  6 passed (6)

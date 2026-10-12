@@ -55,6 +55,7 @@ export async function runMigrations(): Promise<void> {
   await applyMigration(primaryPool0, '003_ledger_trigger.sql', 'Database 0');
   await applyMigration(primaryPool0, '004_activity_feed_index.sql', 'Database 0');
   await applyMigration(primaryPool0, '005_billing_enhancements.sql', 'Database 0');
+  await applyMigration(primaryPool0, '006_devices_and_push.sql', 'Database 0');
 
   // Database 1: Shard 1 tables only
   logger.info('--- Migrating Database 1 (Shard 1) ---');

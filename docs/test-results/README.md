@@ -13,8 +13,8 @@ This document tracks all 14 mandatory proof tests required by PRD Section 11.
 | T7 | Same Idempotency-Key twice returns the same stored response | Idempotent payments | **PASSED** | 2026-10-12 | [T7.txt](T7.txt) |
 | T8 | Starter team cannot invite a sixth member | Seat limits | **PASSED** | 2026-10-12 | [T8.txt](T8.txt) |
 | T9 | Cursor pagination with inserts between pages | Feed correctness | **PASSED** | 2026-10-12 | [T9.txt](T9.txt) |
-| T10 | Quiet hours worker test delays notification | Settings obeyed | Pending (M6) | - | - |
+| T10 | Quiet hours worker test delays notification | Settings obeyed | **PASSED** | 2026-10-12 | [T10.txt](T10.txt) |
 | T11 | Ledger UPDATE and DELETE fail | Append-only ledger | **PASSED** | 2026-10-12 | [T11.txt](T11.txt) |
 | T12 | Rebuilding subscription state from ledger matches | Ledger integrity | **PASSED** | 2026-10-12 | [T12.txt](T12.txt) |
 | T13 | Rate limit returns 429 then resets | Redis rate limiting | Pending (M7) | - | - |
-| T14 | Invalid push token receipt deletes the device | Token cleanup | Pending (M6) | - | - |
+| T14 | Invalid push token receipt deletes the device | Token cleanup | **PASSED** | 2026-10-12 | [T14.txt](T14.txt) |

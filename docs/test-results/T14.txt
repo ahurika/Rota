@@ -1,0 +1,14 @@
+Proof Test T14: Push Notification Receipts Cleanup (DeviceNotRegistered)
+Command: npm run --workspace=server test devices_receipts_t14
+Date: 2026-10-12
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/devices_receipts_t14.test.ts (1 test) 133ms
+   ✓ Proof Test T14: Push Notifications Receipt Handling and Device Cleanup > T14: DeviceNotRegistered receipt deletes the device row from the database 133ms
+
+Verification:
+- Registered two devices for a user.
+- Simulated Expo push receipt returning { status: 'error', details: { error: 'DeviceNotRegistered' } } for Device 1 and { status: 'ok' } for Device 2.
+- processReceipts identified the unregistered token and deleted the row from the devices table in PostgreSQL.
+- Asserted Device 1 is deleted (null) while Device 2 remains intact.

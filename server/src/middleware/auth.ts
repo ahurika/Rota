@@ -4,6 +4,11 @@ import { AppError } from '../lib/errors.js';
 import { getRedisClient } from '../db/shards.js';
 import { usersRepository } from '../repositories/usersRepository.js';
 
+export interface AuthVariables {
+  userId: string;
+  familyId: string;
+}
+
 export const requireAuth = () =>
   createMiddleware(async (c, next) => {
     const authHeader = c.req.header('authorization');
