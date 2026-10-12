@@ -1,0 +1,17 @@
+Proof Test T8: Seat Caps and Concurrency Enforcement on Starter Teams
+Ran on: 2026-10-12
+Command: npm run --workspace=server test -- seats_t8.test.ts
+
+> server@1.0.0 test
+> vitest run seats_t8.test.ts
+
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/seats_t8.test.ts (1 test) 519ms
+   ✓ Proof Test T8: Seat Caps and Concurrency Enforcement on Starter Teams > T8: Starter team cannot exceed 5 seats; 6th invite returns 409 and concurrent invites are strictly serialized 518ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:21:44
+   Duration  1.74s (transform 256ms, setup 0ms, collect 680ms, tests 519ms, environment 0ms, prepare 147ms)

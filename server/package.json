@@ -1,0 +1,40 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:proration": "vitest run test/unit/proration.test.ts",
+    "lint": "tsc --noEmit",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:seed": "echo \"db:seed placeholder\"",
+    "loadtest": "echo \"loadtest placeholder\""
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@node-rs/argon2": "^2.2.2",
+    "dotenv": "^16.4.7",
+    "hono": "^4.6.14",
+    "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "pino": "^9.5.0",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.10.1",
+    "@types/pg": "^8.23.1",
+    "@types/uuid": "^10.0.0",
+    "pino-pretty": "^13.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

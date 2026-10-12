@@ -1,0 +1,17 @@
+Proof Test T2: Multi-Tenant Isolation - Cross-Team Requests Return 404
+Ran on: 2026-10-12
+Command: npm run --workspace=server test -- isolation_t2.test.ts
+
+> server@1.0.0 test
+> vitest run isolation_t2.test.ts
+
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/isolation_t2.test.ts (1 test) 286ms
+   ✓ Proof Test T2: Multi-Tenant Isolation - Cross-Team Requests Return 404 > T2: User from Team A receives 404 for Team B resources, preventing enumeration and modification 284ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:20:17
+   Duration  1.74s (transform 308ms, setup 0ms, collect 833ms, tests 286ms, environment 0ms, prepare 166ms)

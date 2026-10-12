@@ -1,0 +1,20 @@
+Proof Test T4: Refresh token reuse revokes the family (Token theft detection)
+Executed: 2026-10-12
+Command: npx vitest run test/integration/token_rotation_t4.test.ts
+
+ RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/token_rotation_t4.test.ts (1 test) 157ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:27:56
+   Duration  1.53s (transform 248ms, setup 0ms, collect 716ms, tests 157ms, environment 0ms, prepare 171ms)
+
+Assertion Summary:
+- User registered and received initial access token + refresh token (RT1)
+- Exchanged RT1 for new access token + new refresh token (RT2)
+- Replayed used RT1 -> Server detected token reuse, returned HTTP 401
+- Database query confirmed all tokens in family_id marked revoked_at = now()
+- Attempted to use RT2 -> Server rejected with HTTP 401 (family revoked)
+Result: PASSED

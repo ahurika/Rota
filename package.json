@@ -1,0 +1,24 @@
+{
+  "name": "rota",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "app"
+  ],
+  "scripts": {
+    "dev": "npm run dev:server",
+    "dev:server": "npm run --workspace=server dev",
+    "dev:app": "npm run --workspace=app dev",
+    "build:server": "npm run --workspace=server build",
+    "test": "npm run --workspace=server test",
+    "test:proration": "npm run --workspace=server test:proration",
+    "lint": "npm run --workspace=server lint",
+    "db:migrate": "npm run --workspace=server db:migrate",
+    "db:seed": "npm run --workspace=server db:seed",
+    "loadtest": "npm run --workspace=server loadtest"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
