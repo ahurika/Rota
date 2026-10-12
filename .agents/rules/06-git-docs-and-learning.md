@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Rule 06: Git, documentation, and learning
 
 **Activation:** Always On.

@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Rule 05: Testing and quality
 
 **Activation:** Always On.
