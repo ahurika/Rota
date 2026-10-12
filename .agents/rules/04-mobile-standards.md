@@ -1,3 +1,8 @@
+---
+trigger: glob
+globs: app/**
+---
+
 # Rule 04: Mobile app standards
 
 **Activation:** Glob `app/**`.

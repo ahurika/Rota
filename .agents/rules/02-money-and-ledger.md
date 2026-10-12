@@ -1,3 +1,8 @@
+---
+trigger: glob
+globs: `server/src/services/billing/**`, `server/src/routes/billing*`, `server/src/routes/webhooks*`, `server/src/jobs/**`.
+---
+
 # Rule 02: Money, billing, and the ledger
 
 **Activation:** Glob `server/src/services/billing/**`, `server/src/routes/billing*`, `server/src/routes/webhooks*`, `server/src/jobs/**`. Also set to Model Decision so it loads for any billing question.

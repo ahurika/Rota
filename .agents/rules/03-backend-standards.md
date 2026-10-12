@@ -1,3 +1,8 @@
+---
+trigger: glob
+globs: server/**
+---
+
 # Rule 03: Backend system design standard
 
 **Activation:** Glob `server/**`.

@@ -50,3 +50,14 @@ Performance evidence was gathered on a real PostgreSQL 17 shard containing **10,
 ### Full Evidence Artifacts
 - [docs/performance/feed-explain-before.txt](performance/feed-explain-before.txt)
 - [docs/performance/feed-explain-after.txt](performance/feed-explain-after.txt)
+
+---
+
+## 4. Mobile Architecture & Offline Strategy (Rule 04)
+
+The Rota mobile application is built with Expo SDK 52, React Native 0.76, Expo Router, and TanStack Query v5.
+
+- **State Classification**: Clear separation across Server State (TanStack Query), Client-only UI State (Zustand), Persisted Offline State (AsyncStorage Persister whitelist), and Hardware-Backed Secrets (`expo-secure-store`). See [docs/STATE.md](STATE.md).
+- **Concurrency & Token Safety**: Single in-flight refresh coalescing in `ApiClient` prevents duplicate refresh calls that trip PostgreSQL refresh token family reuse detection (Proof Test T4).
+- **Offline Shift Access**: Shifts and roster persist to disk with a 24-hour TTL, enabling full schedule review in subway/airplane offline mode with explicit "Last updated" timestamps and NetInfo state handling.
+- **High-Performance Infinite Scrolling**: The activity feed is rendered using Shopify `FlashList` with guarded `onEndReached` handlers (`!isFetchingNextPage && hasNextPage`), item deduplication, and zero UI stuttering over 10,000+ records.
