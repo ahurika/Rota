@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Icon } from 'react-native-paper';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { AppTabBar } from '../../src/ui/components/AppTabBar.js';
+import { AppTabBar } from '../../src/ui/components/AppTabBar';
 
 function tabIcon(on: string, off: string) {
   return ({ color, focused }: { color: string; focused: boolean }) => (

@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { api } from '../../api/client.js';
-import { feedKeys } from '../../query/keys.js';
+import { api } from '../../api/client';
+import { feedKeys } from '../../query/keys';
 
 export interface ActivityEvent {
   id: string;

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, ProgressBar, Avatar, Chip, IconButton, Button, useTheme } from 'react-native-paper';
-import { ScreenHeader } from '../../src/ui/components/ScreenHeader.js';
-import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog.js';
-import { ResultDialog } from '../../src/ui/components/ResultDialog.js';
-import { useSnackbar } from '../../src/ui/components/SnackbarProvider.js';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
+import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
+import { ResultDialog } from '../../src/ui/components/ResultDialog';
+import { useSnackbar } from '../../src/ui/components/SnackbarProvider';
 
 type Member = {
   id: string;

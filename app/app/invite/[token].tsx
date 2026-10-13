@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { apiClient } from '../../src/api/client.js';
-import { useUiStore } from '../../src/state/uiStore.js';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens.js';
+import { apiClient } from '../../src/api/client';
+import { useUiStore } from '../../src/state/uiStore';
+import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens';
 
 export default function InviteScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();

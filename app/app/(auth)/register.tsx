@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, TextInput, Button, HelperText, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { apiClient } from '../../src/api/client.js';
-import { secureStorage } from '../../src/lib/secureStore.js';
-import { PasswordField } from '../../src/ui/components/PasswordField.js';
-import { ScreenHeader } from '../../src/ui/components/ScreenHeader.js';
-import { ResultDialog } from '../../src/ui/components/ResultDialog.js';
-import { fieldMessage, toUxMessage } from '../../src/ui/errorMessages.js';
-import { scorePassword } from '../../src/ui/passwordStrength.js';
+import { apiClient } from '../../src/api/client';
+import { secureStorage } from '../../src/lib/secureStore';
+import { PasswordField } from '../../src/ui/components/PasswordField';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
+import { ResultDialog } from '../../src/ui/components/ResultDialog';
+import { fieldMessage, toUxMessage } from '../../src/ui/errorMessages';
+import { scorePassword } from '../../src/ui/passwordStrength';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

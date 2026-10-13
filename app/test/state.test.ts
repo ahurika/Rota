@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ApiClient } from '../src/api/client.js';
-import { secureStorage } from '../src/lib/secureStore.js';
-import { persistOptions } from '../src/query/queryClient.js';
-import { validateNotificationUrl } from '../src/notifications/routing.js';
+import { ApiClient } from '../src/api/client';
+import { secureStorage } from '../src/lib/secureStore';
+import { persistOptions } from '../src/query/queryClient';
+import { validateNotificationUrl } from '../src/notifications/routing';
 import { QueryClient } from '@tanstack/react-query';
-import { shiftKeys } from '../src/query/keys.js';
+import { shiftKeys } from '../src/query/keys';
 
 describe('Milestone M4: Mobile State Architecture & Offline Tests', () => {
   beforeEach(async () => {
@@ -186,7 +186,7 @@ describe('Milestone M4: Mobile State Architecture & Offline Tests', () => {
 
   // 5. Client-only UI Store isolation test
   it('Maintains UI-only client state in Zustand separate from server state', async () => {
-    const { useUiStore } = await import('../src/state/uiStore.js');
+    const { useUiStore } = await import('../src/state/uiStore');
 
     const state = useUiStore.getState();
     expect(state.selectedTab).toBe('shifts');

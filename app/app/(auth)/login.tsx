@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, TextInput, Button, HelperText, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { secureStorage } from '../../src/lib/secureStore.js';
-import { apiClient } from '../../src/api/client.js';
-import { PasswordField } from '../../src/ui/components/PasswordField.js';
-import { ScreenHeader } from '../../src/ui/components/ScreenHeader.js';
-import { toUxMessage } from '../../src/ui/errorMessages.js';
+import { secureStorage } from '../../src/lib/secureStore';
+import { apiClient } from '../../src/api/client';
+import { PasswordField } from '../../src/ui/components/PasswordField';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
+import { toUxMessage } from '../../src/ui/errorMessages';
 
 export default function LoginScreen() {
   const router = useRouter();

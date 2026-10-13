@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../api/client.js';
-import { shiftKeys } from '../../query/keys.js';
+import { api } from '../../api/client';
+import { shiftKeys } from '../../query/keys';
 
 export interface Shift {
   id: string;

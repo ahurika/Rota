@@ -4,11 +4,11 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClientProvider, focusManager } from '@tanstack/react-query';
-import { queryClient } from '../src/query/queryClient.js';
-import { lightTheme as paperLightTheme, darkTheme as paperDarkTheme } from '../src/ui/theme.js';
-import { SnackbarProvider } from '../src/ui/components/SnackbarProvider.js';
-import { lightTheme as theme } from '../src/ui/tokens.js';
-import { usePushNotifications } from '../src/notifications/usePushNotifications.js';
+import { queryClient } from '../src/query/queryClient';
+import { lightTheme as paperLightTheme, darkTheme as paperDarkTheme } from '../src/ui/theme';
+import { SnackbarProvider } from '../src/ui/components/SnackbarProvider';
+import { lightTheme as theme } from '../src/ui/tokens';
+import { usePushNotifications } from '../src/notifications/usePushNotifications';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

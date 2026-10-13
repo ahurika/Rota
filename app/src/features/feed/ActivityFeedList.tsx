@@ -8,8 +8,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { useActivityFeed, ActivityEvent } from './useActivityFeed.js';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../ui/tokens.js';
+import { useActivityFeed, ActivityEvent } from './useActivityFeed';
+import { lightTheme as theme, spacing, radii, typography, layout } from '../../ui/tokens';
 
 interface ActivityFeedListProps {
   teamId: string;

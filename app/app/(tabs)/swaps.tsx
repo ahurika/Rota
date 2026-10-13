@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, SegmentedButtons, Card, Chip, Button, useTheme } from 'react-native-paper';
-import { ScreenHeader } from '../../src/ui/components/ScreenHeader.js';
-import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog.js';
-import { useSnackbar } from '../../src/ui/components/SnackbarProvider.js';
-import { extraColors } from '../../src/ui/theme.js';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
+import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
+import { useSnackbar } from '../../src/ui/components/SnackbarProvider';
+import { extraColors } from '../../src/ui/theme';
 
 export default function SwapsScreen() {
   const theme = useTheme();

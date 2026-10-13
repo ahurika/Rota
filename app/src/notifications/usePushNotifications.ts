@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import { apiClient } from '../api/client.js';
+import { apiClient } from '../api/client';
 
 export function usePushNotifications() {
   useEffect(() => {

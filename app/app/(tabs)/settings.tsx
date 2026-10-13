@@ -10,11 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { secureStorage } from '../../src/lib/secureStore.js';
-import { queryClient } from '../../src/query/queryClient.js';
-import { useUiStore } from '../../src/state/uiStore.js';
-import { useSettings, useUpdateSettings } from '../../src/features/settings/useSettings.js';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens.js';
+import { secureStorage } from '../../src/lib/secureStore';
+import { queryClient } from '../../src/query/queryClient';
+import { useUiStore } from '../../src/state/uiStore';
+import { useSettings, useUpdateSettings } from '../../src/features/settings/useSettings';
+import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens';
 
 export default function SettingsScreen() {
   const router = useRouter();

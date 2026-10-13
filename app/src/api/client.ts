@@ -1,4 +1,4 @@
-import { secureStorage } from '../lib/secureStore.js';
+import { secureStorage } from '../lib/secureStore';
 
 export interface ApiErrorResponse {
   error: {

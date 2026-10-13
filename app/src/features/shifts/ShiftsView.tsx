@@ -9,8 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
-import { useShifts, useRequestSwap, Shift } from './useShifts.js';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../ui/tokens.js';
+import { useShifts, useRequestSwap, Shift } from './useShifts';
+import { lightTheme as theme, spacing, radii, typography, layout } from '../../ui/tokens';
 
 interface ShiftsViewProps {
   teamId: string;

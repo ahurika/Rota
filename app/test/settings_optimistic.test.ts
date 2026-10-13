@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { QueryClient, focusManager } from '@tanstack/react-query';
-import { settingsKeys } from '../src/query/keys.js';
-import { UserSettings } from '../src/features/settings/useSettings.js';
+import { settingsKeys } from '../src/query/keys';
+import { UserSettings } from '../src/features/settings/useSettings';
 
 describe('Settings Sync & Optimistic Updates (FR-ST2 & FR-ST4)', () => {
   let queryClient: QueryClient;
