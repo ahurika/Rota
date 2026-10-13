@@ -10,4 +10,5 @@ google-services.json
 *.jks
 *.keystore
 *.exe
+*.vsix
 load-tests/bin/

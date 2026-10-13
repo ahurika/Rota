@@ -6,8 +6,9 @@ import { z } from 'zod';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load server/.env explicitly and fallback to cwd
-loadDotenv({ path: path.resolve(__dirname, '../../.env') });
+// Load single unified root .env file from workspace root or process.cwd()
+loadDotenv({ path: path.resolve(__dirname, '../../../.env') });
+loadDotenv({ path: path.resolve(process.cwd(), '.env') });
 loadDotenv();
 
 const envSchema = z.object({
