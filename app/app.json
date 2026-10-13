@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Rota",
+    "slug": "rota",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "scheme": "rota",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rota.shifts"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.rota.shifts"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

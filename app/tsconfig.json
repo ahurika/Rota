@@ -11,7 +11,9 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
     "noEmit": true
   },
@@ -19,5 +21,6 @@
     "src/**/*",
     "app/**/*",
     "test/**/*"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }
