@@ -1,28 +1,45 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, TextInput, Button, HelperText, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client.js';
 import { secureStorage } from '../../src/lib/secureStore.js';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens.js';
+import { PasswordField } from '../../src/ui/components/PasswordField.js';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader.js';
+import { ResultDialog } from '../../src/ui/components/ResultDialog.js';
+import { fieldMessage, toUxMessage } from '../../src/ui/errorMessages.js';
+import { scorePassword } from '../../src/ui/passwordStrength.js';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const theme = useTheme();
+
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+
+  const strength = scorePassword(password, email);
+  const emailError =
+    submitted && !EMAIL_RE.test(email)
+      ? fieldMessage(email ? 'EMAIL_INVALID' : 'EMAIL_REQUIRED')
+      : undefined;
+  const nameError = submitted && !name.trim() ? 'Enter your full name.' : undefined;
+  const passwordError =
+    submitted && !strength.allowed
+      ? fieldMessage(password.length < 10 ? 'PASSWORD_TOO_SHORT' : 'PASSWORD_TOO_COMMON')
+      : undefined;
 
   const handleRegister = async () => {
-    if (!email || !password || !name) {
-      Alert.alert('Validation Error', 'Please fill in all fields.');
+    setSubmitted(true);
+    setServerError(null);
+
+    if (!name.trim() || !EMAIL_RE.test(email) || !strength.allowed) {
       return;
     }
 
@@ -33,76 +50,119 @@ export default function RegisterScreen() {
         await secureStorage.setAccessToken(res.tokens.accessToken);
         await secureStorage.setRefreshToken(res.tokens.refreshToken);
       }
-      router.replace('/(tabs)/shifts');
+      setIsSuccessDialogOpen(true);
     } catch (err: any) {
-      Alert.alert('Registration Failed', err.message || 'Error creating account');
+      const ux = toUxMessage(err?.code);
+      setServerError(`${ux.title}. ${ux.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Join Rota</Text>
-      <Text style={styles.subtitle}>Create your account</Text>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title="Create account" />
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text variant="headlineSmall" style={[styles.headline, { color: theme.colors.onSurface }]}>
+          Join Rota
+        </Text>
+        <Text variant="bodyLarge" style={[styles.subhead, { color: theme.colors.onSurfaceVariant }]}>
+          Set up scheduling and team coordination in a minute.
+        </Text>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Jane Doe"
-          placeholderTextColor={theme.textMuted}
-          accessibilityLabel="Full name input"
-        />
+        {serverError ? (
+          <View
+            style={[styles.banner, { backgroundColor: theme.colors.errorContainer }]}
+            accessibilityLiveRegion="assertive"
+          >
+            <Text variant="bodyMedium" style={{ color: theme.colors.onErrorContainer }}>
+              {serverError}
+            </Text>
+          </View>
+        ) : null}
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="user@example.com"
-          placeholderTextColor={theme.textMuted}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          accessibilityLabel="Email input"
-        />
+        <View style={styles.fieldGroup}>
+          <TextInput
+            mode="outlined"
+            label="Full Name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            autoComplete="name"
+            error={Boolean(nameError)}
+            style={styles.input}
+          />
+          {nameError ? (
+            <HelperText type="error" visible>
+              {nameError}
+            </HelperText>
+          ) : null}
+        </View>
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="At least 8 characters"
-          placeholderTextColor={theme.textMuted}
-          secureTextEntry
-          accessibilityLabel="Password input"
-        />
+        <View style={styles.fieldGroup}>
+          <TextInput
+            mode="outlined"
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            error={Boolean(emailError)}
+            style={styles.input}
+          />
+          {emailError ? (
+            <HelperText type="error" visible>
+              {emailError}
+            </HelperText>
+          ) : null}
+        </View>
 
-        <TouchableOpacity
-          style={styles.registerButton}
+        <View style={styles.fieldGroup}>
+          <PasswordField
+            value={password}
+            onChangeText={setPassword}
+            label="Password"
+            email={email}
+            showStrength
+            autoComplete="new-password"
+            errorText={passwordError}
+            onSubmitEditing={handleRegister}
+          />
+        </View>
+
+        <Button
+          mode="contained"
           onPress={handleRegister}
+          loading={isSubmitting}
           disabled={isSubmitting}
-          accessibilityRole="button"
-          accessibilityLabel="Register"
+          contentStyle={styles.buttonContent}
+          style={styles.submitButton}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color={theme.surface} />
-          ) : (
-            <Text style={styles.registerButtonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
+          Create account
+        </Button>
 
-        <TouchableOpacity
-          style={styles.linkButton}
+        <Button
+          mode="text"
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Back to log in"
+          style={styles.switchButton}
         >
-          <Text style={styles.linkText}>Already have an account? Log in</Text>
-        </TouchableOpacity>
-      </View>
+          Already have an account? Log in
+        </Button>
+      </ScrollView>
+
+      {/* Success Modal */}
+      <ResultDialog
+        visible={isSuccessDialogOpen}
+        kind="success"
+        title="Account created"
+        message="Your account is ready. Let's look at your team schedule."
+        actionLabel="Go to schedule"
+        onClose={() => {
+          setIsSuccessDialogOpen(false);
+          router.replace('/(tabs)/shifts');
+        }}
+      />
     </View>
   );
 }
@@ -110,64 +170,37 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.background,
-    justifyContent: 'center',
-    padding: spacing.lg,
   },
-  title: {
-    ...typography.h1,
-    color: theme.text,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
+  content: {
+    padding: 16,
+    paddingTop: 24,
   },
-  subtitle: {
-    ...typography.body,
-    color: theme.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
+  headline: {
+    marginBottom: 4,
+    fontWeight: '700',
   },
-  form: {
-    backgroundColor: theme.surface,
-    padding: spacing.lg,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: theme.border,
+  subhead: {
+    marginBottom: 24,
   },
-  label: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: theme.text,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
+  banner: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  fieldGroup: {
+    marginBottom: 12,
   },
   input: {
-    height: layout.minTouchTarget,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.sm,
-    color: theme.text,
-    fontSize: 15,
+    backgroundColor: 'transparent',
   },
-  registerButton: {
-    minHeight: layout.minTouchTarget,
-    backgroundColor: theme.primary,
-    borderRadius: radii.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: spacing.lg,
+  buttonContent: {
+    minHeight: 48,
   },
-  registerButtonText: {
-    ...typography.button,
-    color: theme.surface,
+  submitButton: {
+    marginTop: 16,
+    borderRadius: 999,
   },
-  linkButton: {
-    marginTop: spacing.md,
-    alignItems: 'center',
-  },
-  linkText: {
-    ...typography.bodySmall,
-    color: theme.primary,
-    fontWeight: '500',
+  switchButton: {
+    marginTop: 8,
   },
 });

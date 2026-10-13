@@ -1,49 +1,67 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { lightTheme as theme } from '../../src/ui/tokens.js';
+import { Icon } from 'react-native-paper';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { AppTabBar } from '../../src/ui/components/AppTabBar.js';
+
+function tabIcon(on: string, off: string) {
+  return ({ color, focused }: { color: string; focused: boolean }) => (
+    <Icon source={focused ? on : off} size={24} color={color} />
+  );
+}
 
 export default function TabsLayout() {
+  // Pending approvals count for managers/owners (badge on Swaps)
+  const pendingSwapsCount = 2;
+
+  // Set to true when billing needs attention (shows a dot badge on Settings for owners)
+  const billingNeedsAttention = false;
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarStyle: {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.border,
-          minHeight: 56,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginBottom: 4,
-        },
-        headerStyle: {
-          backgroundColor: theme.surface,
-        },
-        headerTitleStyle: {
-          fontWeight: '600',
-          color: theme.text,
-        },
+        headerShown: false,
       }}
+      tabBar={(props: BottomTabBarProps) => (
+        <AppTabBar
+          {...props}
+          badges={{
+            swaps: pendingSwapsCount,
+            settings: billingNeedsAttention,
+          }}
+        />
+      )}
     >
       <Tabs.Screen
         name="index"
         options={{
-          href: null, // Hidden from tab bar; redirects to shifts
+          href: null, // Hidden from tab bar; redirects to Schedule
         }}
       />
       <Tabs.Screen
         name="shifts"
         options={{
-          title: 'Shifts',
-          tabBarAccessibilityLabel: 'Shifts tab',
+          title: 'Schedule',
+          tabBarLabel: 'Schedule',
+          tabBarIcon: tabIcon('calendar-month', 'calendar-month-outline'),
+          tabBarAccessibilityLabel: 'Schedule tab',
+        }}
+      />
+      <Tabs.Screen
+        name="swaps"
+        options={{
+          title: 'Swaps',
+          tabBarLabel: 'Swaps',
+          tabBarIcon: tabIcon('swap-horizontal-bold', 'swap-horizontal'),
+          tabBarAccessibilityLabel: 'Swaps tab',
         }}
       />
       <Tabs.Screen
         name="feed"
         options={{
-          title: 'Feed',
+          title: 'Activity',
+          tabBarLabel: 'Activity',
+          tabBarIcon: tabIcon('bell', 'bell-outline'),
           tabBarAccessibilityLabel: 'Activity feed tab',
         }}
       />
@@ -51,6 +69,8 @@ export default function TabsLayout() {
         name="team"
         options={{
           title: 'Team',
+          tabBarLabel: 'Team',
+          tabBarIcon: tabIcon('account-group', 'account-group-outline'),
           tabBarAccessibilityLabel: 'Team roster tab',
         }}
       />
@@ -58,6 +78,8 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          tabBarLabel: 'Settings',
+          tabBarIcon: tabIcon('cog', 'cog-outline'),
           tabBarAccessibilityLabel: 'Settings tab',
         }}
       />

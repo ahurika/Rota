@@ -2,8 +2,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BottomNavigation } from 'react-native-paper';
 
 // Material 3 navigation bar (3 to 5 destinations, labels always shown).
-// Used as the `tabBar` of the Expo Router Tabs layout. Badge counts come from the caller.
-export type AppTabBarProps = BottomTabBarProps & { badges?: Record<string, number | undefined> };
+// Used as the `tabBar` of the Expo Router Tabs layout. Badge counts or dot indicators come from the caller.
+export type AppTabBarProps = BottomTabBarProps & { badges?: Record<string, number | boolean | undefined> };
 
 export function AppTabBar({ navigation, state, descriptors, insets, badges = {} }: AppTabBarProps) {
   return (
@@ -33,18 +33,22 @@ export function AppTabBar({ navigation, state, descriptors, insets, badges = {} 
       }}
       getBadge={({ route }) => {
         const navRoute = state.routes.find((r) => r.key === route.key);
-        const n = navRoute ? badges[navRoute.name] : undefined;
-        return n && n > 0 ? n : false;
+        const b = navRoute ? badges[navRoute.name] : undefined;
+        if (typeof b === 'number' && b > 0) return b;
+        if (b === true) return true; // dot badge in React Native Paper
+        return false;
       }}
       getAccessibilityLabel={({ route }) => {
         const navRoute = state.routes.find((r) => r.key === route.key);
         const name = navRoute?.name ?? '';
-        const n = badges[name];
+        const b = badges[name];
         const options = descriptors[route.key]?.options;
         const label = typeof options?.tabBarLabel === 'string'
           ? options.tabBarLabel
           : (options?.title ?? name);
-        return n && n > 0 ? `${label}, ${n} pending` : label;
+        if (typeof b === 'number' && b > 0) return `${label}, ${b} pending`;
+        if (b === true) return `${label}, attention needed`;
+        return label;
       }}
     />
   );

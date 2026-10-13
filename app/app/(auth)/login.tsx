@@ -1,29 +1,43 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, TextInput, Button, HelperText, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { secureStorage } from '../../src/lib/secureStore.js';
 import { apiClient } from '../../src/api/client.js';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens.js';
+import { PasswordField } from '../../src/ui/components/PasswordField.js';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader.js';
+import { toUxMessage } from '../../src/ui/errorMessages.js';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const theme = useTheme();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Validation Error', 'Please enter email and password.');
-      return;
+    setServerError(null);
+    let hasError = false;
+
+    if (!email.trim()) {
+      setEmailError('Enter your email address.');
+      hasError = true;
+    } else {
+      setEmailError(null);
     }
+
+    if (!password) {
+      setPasswordError('Enter your password.');
+      hasError = true;
+    } else {
+      setPasswordError(null);
+    }
+
+    if (hasError) return;
 
     try {
       setIsSubmitting(true);
@@ -34,64 +48,90 @@ export default function LoginScreen() {
       }
       router.replace('/(tabs)/shifts');
     } catch (err: any) {
-      Alert.alert('Login Failed', err.message || 'Invalid credentials');
+      const ux = toUxMessage(err?.code || 'INVALID_CREDENTIALS');
+      setServerError(`${ux.title}. ${ux.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Rota</Text>
-      <Text style={styles.subtitle}>Shift scheduling & team coordination</Text>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title="Log in" />
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text variant="headlineSmall" style={[styles.headline, { color: theme.colors.onSurface }]}>
+          Welcome back
+        </Text>
+        <Text variant="bodyLarge" style={[styles.subhead, { color: theme.colors.onSurfaceVariant }]}>
+          Sign in to access your shifts and team schedule.
+        </Text>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="user@example.com"
-          placeholderTextColor={theme.textMuted}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          accessibilityLabel="Email input"
-        />
+        {serverError ? (
+          <View
+            style={[styles.banner, { backgroundColor: theme.colors.errorContainer }]}
+            accessibilityLiveRegion="assertive"
+          >
+            <Text variant="bodyMedium" style={{ color: theme.colors.onErrorContainer }}>
+              {serverError}
+            </Text>
+          </View>
+        ) : null}
 
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="••••••••"
-          placeholderTextColor={theme.textMuted}
-          secureTextEntry
-          accessibilityLabel="Password input"
-        />
+        <View style={styles.fieldGroup}>
+          <TextInput
+            mode="outlined"
+            label="Email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError(null);
+            }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            error={Boolean(emailError)}
+            style={styles.input}
+          />
+          {emailError ? (
+            <HelperText type="error" visible>
+              {emailError}
+            </HelperText>
+          ) : null}
+        </View>
 
-        <TouchableOpacity
-          style={styles.loginButton}
+        <View style={styles.fieldGroup}>
+          <PasswordField
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError(null);
+            }}
+            label="Password"
+            autoComplete="current-password"
+            errorText={passwordError ?? undefined}
+            onSubmitEditing={handleLogin}
+          />
+        </View>
+
+        <Button
+          mode="contained"
           onPress={handleLogin}
+          loading={isSubmitting}
           disabled={isSubmitting}
-          accessibilityRole="button"
-          accessibilityLabel="Log In"
+          contentStyle={styles.buttonContent}
+          style={styles.submitButton}
         >
-          {isSubmitting ? (
-            <ActivityIndicator color={theme.surface} />
-          ) : (
-            <Text style={styles.loginButtonText}>Log In</Text>
-          )}
-        </TouchableOpacity>
+          Log in
+        </Button>
 
-        <TouchableOpacity
-          style={styles.linkButton}
+        <Button
+          mode="text"
           onPress={() => router.push('/(auth)/register')}
-          accessibilityRole="button"
-          accessibilityLabel="Create an account"
+          style={styles.switchButton}
         >
-          <Text style={styles.linkText}>Don't have an account? Sign up</Text>
-        </TouchableOpacity>
-      </View>
+          Don't have an account? Create one
+        </Button>
+      </ScrollView>
     </View>
   );
 }
@@ -99,64 +139,37 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.background,
-    justifyContent: 'center',
-    padding: spacing.lg,
   },
-  title: {
-    ...typography.h1,
-    color: theme.text,
-    textAlign: 'center',
-    marginBottom: spacing.xs,
+  content: {
+    padding: 16,
+    paddingTop: 24,
   },
-  subtitle: {
-    ...typography.body,
-    color: theme.textMuted,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
+  headline: {
+    marginBottom: 4,
+    fontWeight: '700',
   },
-  form: {
-    backgroundColor: theme.surface,
-    padding: spacing.lg,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: theme.border,
+  subhead: {
+    marginBottom: 24,
   },
-  label: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: theme.text,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
+  banner: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  fieldGroup: {
+    marginBottom: 12,
   },
   input: {
-    height: layout.minTouchTarget,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.sm,
-    color: theme.text,
-    fontSize: 15,
+    backgroundColor: 'transparent',
   },
-  loginButton: {
-    minHeight: layout.minTouchTarget,
-    backgroundColor: theme.primary,
-    borderRadius: radii.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: spacing.lg,
+  buttonContent: {
+    minHeight: 48,
   },
-  loginButtonText: {
-    ...typography.button,
-    color: theme.surface,
+  submitButton: {
+    marginTop: 16,
+    borderRadius: 999,
   },
-  linkButton: {
-    marginTop: spacing.md,
-    alignItems: 'center',
-  },
-  linkText: {
-    ...typography.bodySmall,
-    color: theme.primary,
-    fontWeight: '500',
+  switchButton: {
+    marginTop: 8,
   },
 });
