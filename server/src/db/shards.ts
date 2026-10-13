@@ -56,11 +56,11 @@ export function getRedisClient(): Redis {
     redisClient = new Redis(env.REDIS_URL, {
       lazyConnect: false,
       enableOfflineQueue: true,
-      maxRetriesPerRequest: 1,
-      connectTimeout: 2000,
+      maxRetriesPerRequest: 3,
+      connectTimeout: 10000,
       retryStrategy: (times) => {
-        if (times > 3) return null;
-        return Math.min(times * 100, 1000);
+        if (times > 5) return null;
+        return Math.min(times * 200, 2000);
       },
     });
     redisClient.on('error', (err: Error) => {

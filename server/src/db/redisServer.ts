@@ -1,4 +1,5 @@
 import { RedisMemoryServer } from 'redis-memory-server';
+import { env } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 
 let memoryServer: RedisMemoryServer | null = null;
@@ -9,6 +10,11 @@ let memoryServer: RedisMemoryServer | null = null;
  */
 export async function ensureRedisServer(): Promise<void> {
   if (memoryServer) {
+    return;
+  }
+
+  // If REDIS_URL points to a remote cloud instance (e.g. Upstash), skip embedded redis
+  if (env.REDIS_URL && !env.REDIS_URL.includes('localhost') && !env.REDIS_URL.includes('127.0.0.1')) {
     return;
   }
 
