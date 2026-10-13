@@ -1,13 +1,19 @@
 import React, { useEffect } from 'react';
-import { AppState, AppStateStatus, Platform } from 'react-native';
+import { AppState, AppStateStatus, Platform, useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { PaperProvider } from 'react-native-paper';
 import { QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { queryClient } from '../src/query/queryClient.js';
+import { lightTheme as paperLightTheme, darkTheme as paperDarkTheme } from '../src/ui/theme.js';
+import { SnackbarProvider } from '../src/ui/components/SnackbarProvider.js';
 import { lightTheme as theme } from '../src/ui/tokens.js';
 import { usePushNotifications } from '../src/notifications/usePushNotifications.js';
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const paperTheme = colorScheme === 'dark' ? paperDarkTheme : paperLightTheme;
+
   // Register push notifications on launch
   usePushNotifications();
 
@@ -23,20 +29,24 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
-          headerTitleStyle: { fontWeight: '600' },
-          contentStyle: { backgroundColor: theme.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)/login" options={{ title: 'Log In', headerBackVisible: false }} />
-        <Stack.Screen name="(auth)/register" options={{ title: 'Register' }} />
-        <Stack.Screen name="invite/[token]" options={{ title: 'Team Invite' }} />
-      </Stack>
+      <PaperProvider theme={paperTheme}>
+        <SnackbarProvider>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: theme.background },
+              headerTintColor: theme.text,
+              headerTitleStyle: { fontWeight: '600' },
+              contentStyle: { backgroundColor: theme.background },
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)/login" options={{ title: 'Log In', headerBackVisible: false }} />
+            <Stack.Screen name="(auth)/register" options={{ title: 'Register' }} />
+            <Stack.Screen name="invite/[token]" options={{ title: 'Team Invite' }} />
+          </Stack>
+        </SnackbarProvider>
+      </PaperProvider>
     </QueryClientProvider>
   );
 }
