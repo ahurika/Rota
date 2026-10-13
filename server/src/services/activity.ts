@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { activityRepository, ActivityEventRow } from '../repositories/activityRepository.js';
 import { AppError } from '../lib/errors.js';
+import { getCachedFeed } from '../lib/cache.js';
 
 const cursorSchema = z.object({
   t: z.string().datetime(),
@@ -54,21 +55,30 @@ export const activityService = {
       cursor = decodeCursor(rawCursor.trim());
     }
 
-    const rows = await activityRepository.listEvents(teamId, cursor, limit);
+    const { data } = await getCachedFeed(
+      teamId,
+      rawCursor ?? null,
+      limit,
+      async () => {
+        const rows = await activityRepository.listEvents(teamId, cursor, limit);
 
-    const hasMore = rows.length > limit;
-    const items = hasMore ? rows.slice(0, limit) : rows;
+        const hasMore = rows.length > limit;
+        const items = hasMore ? rows.slice(0, limit) : rows;
 
-    let nextCursor: string | null = null;
-    if (hasMore && items.length > 0) {
-      const lastItem = items[items.length - 1];
-      nextCursor = encodeCursor(lastItem.created_at, lastItem.id);
-    }
+        let nextCursor: string | null = null;
+        if (hasMore && items.length > 0) {
+          const lastItem = items[items.length - 1];
+          nextCursor = encodeCursor(lastItem.created_at, lastItem.id);
+        }
 
-    return {
-      items,
-      nextCursor,
-      hasMore,
-    };
+        return {
+          items,
+          nextCursor,
+          hasMore,
+        };
+      }
+    );
+
+    return data;
   },
 };

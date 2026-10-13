@@ -1,6 +1,7 @@
 import { PoolClient } from 'pg';
 import { dbForTeam } from '../db/shards.js';
 import { Role } from '../config/permissions.js';
+import { bumpTeamVersion, getTeamVersion, cached, TTL } from '../lib/cache.js';
 
 export interface MembershipRow {
   team_id: string;
@@ -19,6 +20,7 @@ export const membershipsRepository = {
        RETURNING *`,
       [teamId, userId, role, status]
     );
+    await bumpTeamVersion(teamId);
     return res.rows[0];
   },
 
@@ -32,12 +34,17 @@ export const membershipsRepository = {
   },
 
   async listByTeam(teamId: string): Promise<MembershipRow[]> {
-    const pool = await dbForTeam(teamId);
-    const res = await pool.query<MembershipRow>(
-      `SELECT * FROM memberships WHERE team_id = $1 ORDER BY created_at ASC`,
-      [teamId]
-    );
-    return res.rows;
+    const ver = await getTeamVersion(teamId);
+    const key = `roster:${teamId}:v${ver}`;
+
+    return cached<MembershipRow[]>(key, TTL.ROSTER, async () => {
+      const pool = await dbForTeam(teamId);
+      const res = await pool.query<MembershipRow>(
+        `SELECT * FROM memberships WHERE team_id = $1 ORDER BY created_at ASC`,
+        [teamId]
+      );
+      return res.rows;
+    });
   },
 
   async removeMember(teamId: string, userId: string): Promise<boolean> {
@@ -46,7 +53,11 @@ export const membershipsRepository = {
       `DELETE FROM memberships WHERE team_id = $1 AND user_id = $2`,
       [teamId, userId]
     );
-    return (res.rowCount ?? 0) > 0;
+    const deleted = (res.rowCount ?? 0) > 0;
+    if (deleted) {
+      await bumpTeamVersion(teamId);
+    }
+    return deleted;
   },
 
   async updateRole(teamId: string, userId: string, role: Role): Promise<void> {
@@ -55,6 +66,7 @@ export const membershipsRepository = {
       `UPDATE memberships SET role = $1 WHERE team_id = $2 AND user_id = $3`,
       [role, teamId, userId]
     );
+    await bumpTeamVersion(teamId);
   },
 
   async countActiveMembers(teamId: string, client?: PoolClient): Promise<number> {

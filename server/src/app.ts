@@ -13,35 +13,16 @@ import { webhooksRouter } from './routes/webhooks.js';
 import { settingsRouter } from './routes/settings.js';
 import { devicesRouter } from './routes/devices.js';
 
+import { observability } from './middleware/observability.js';
+
 export type AppVariables = {
   requestId: string;
 };
 
 export const app = new Hono<{ Variables: AppVariables }>();
 
-// 1. Request ID middleware (first in pipeline)
-app.use('*', requestId());
-
-// 2. Structured request logger
-app.use('*', async (c, next) => {
-  const start = Date.now();
-  const reqId = c.get('requestId');
-  const path = c.req.path;
-  const method = c.req.method;
-
-  await next();
-
-  const durationMs = Date.now() - start;
-  const status = c.res.status;
-
-  logger.info({
-    requestId: reqId,
-    method,
-    route: path,
-    status,
-    durationMs,
-  });
-});
+// 1. Structured request observability (requestId, durationMs, route pattern, user/team tracking)
+app.use('*', observability());
 
 // Liveness health check
 app.route('/health', healthRouter);

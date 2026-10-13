@@ -16,5 +16,5 @@ This document tracks all 14 mandatory proof tests required by PRD Section 11.
 | T10 | Quiet hours worker test delays notification | Settings obeyed | **PASSED** | 2026-10-12 | [T10.txt](T10.txt) |
 | T11 | Ledger UPDATE and DELETE fail | Append-only ledger | **PASSED** | 2026-10-12 | [T11.txt](T11.txt) |
 | T12 | Rebuilding subscription state from ledger matches | Ledger integrity | **PASSED** | 2026-10-12 | [T12.txt](T12.txt) |
-| T13 | Rate limit returns 429 then resets | Redis rate limiting | Pending (M7) | - | - |
+| T13 | Rate limit returns 429 then resets | Redis rate limiting | **PASSED** | 2026-10-12 | [T13.txt](T13.txt) |
 | T14 | Invalid push token receipt deletes the device | Token cleanup | **PASSED** | 2026-10-12 | [T14.txt](T14.txt) |

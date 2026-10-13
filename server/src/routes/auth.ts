@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authService } from '../services/auth.js';
 import { AppError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
+import { rateLimiter } from '../lib/rateLimit.js';
 
 export type AuthVariables = {
   userId: string;
@@ -48,34 +49,42 @@ const googleAuthSchema = z
   .strict();
 
 // 1. POST /v1/auth/register
-authRouter.post('/register', async (c) => {
-  const body = await c.req.json().catch(() => {
-    throw new AppError('VALIDATION_FAILED', 400, 'Invalid JSON body');
-  });
+authRouter.post(
+  '/register',
+  rateLimiter({ routeId: 'register', limit: 10, windowMs: 3600000, failClosed: true }),
+  async (c) => {
+    const body = await c.req.json().catch(() => {
+      throw new AppError('VALIDATION_FAILED', 400, 'Invalid JSON body');
+    });
 
-  const parsed = registerSchema.safeParse(body);
-  if (!parsed.success) {
-    throw new AppError('VALIDATION_FAILED', 400, 'Validation failed', parsed.error.format());
+    const parsed = registerSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new AppError('VALIDATION_FAILED', 400, 'Validation failed', parsed.error.format());
+    }
+
+    const result = await authService.register(parsed.data.email, parsed.data.password);
+    return c.json(result, 201);
   }
-
-  const result = await authService.register(parsed.data.email, parsed.data.password);
-  return c.json(result, 201);
-});
+);
 
 // 2. POST /v1/auth/login
-authRouter.post('/login', async (c) => {
-  const body = await c.req.json().catch(() => {
-    throw new AppError('VALIDATION_FAILED', 400, 'Invalid JSON body');
-  });
+authRouter.post(
+  '/login',
+  rateLimiter({ routeId: 'login', limit: 20, windowMs: 600000, failClosed: true }),
+  async (c) => {
+    const body = await c.req.json().catch(() => {
+      throw new AppError('VALIDATION_FAILED', 400, 'Invalid JSON body');
+    });
 
-  const parsed = loginSchema.safeParse(body);
-  if (!parsed.success) {
-    throw new AppError('VALIDATION_FAILED', 400, 'Validation failed', parsed.error.format());
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new AppError('VALIDATION_FAILED', 400, 'Validation failed', parsed.error.format());
+    }
+
+    const result = await authService.login(parsed.data.email, parsed.data.password, parsed.data.deviceId);
+    return c.json(result, 200);
   }
-
-  const result = await authService.login(parsed.data.email, parsed.data.password, parsed.data.deviceId);
-  return c.json(result, 200);
-});
+);
 
 // 3. POST /v1/auth/google
 authRouter.post('/google', async (c) => {

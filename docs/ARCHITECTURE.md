@@ -111,3 +111,79 @@ chargeCents = costCents - creditCents
 ### Settings Synchronization & Conflict Resolution
 - **Field-Level Timestamps**: The `user_settings` table maintains independent `updated_at_*` timestamps for every configurable field (`updated_at_quiet_start`, `updated_at_quiet_end`, `updated_at_timezone`, `updated_at_notif_types`, `updated_at_language`, `updated_at_theme`).
 - **Conflict Resolution**: Last-write-to-arrive per field wins. If a client updates their `theme` offline while another client modifies `quietStart`, both updates merge cleanly without overwriting each other's independent modifications.
+
+---
+
+## 7. Redis Caching, Rate Limiting, and Observability (Rule 08 & Milestone M7)
+
+### Distributed Redis Cache-Aside Layer
+To prevent database connection pool saturation during peak shift handovers, Rota implements a cache-aside architecture backed by Redis (or an in-process Redis memory server in local testing).
+
+#### Cache Key Design & Invalidation
+- **Versioned Namespace**: Each tenant maintains an atomic integer counter `teamver:{teamId}`.
+- **Cache Keys**:
+  - Activity Feed: `feed:{teamId}:v{ver}:{cursor}:{limit}` (TTL: 15s)
+  - Calendar Shifts: `cal:{teamId}:v{ver}:{from}:{to}` (TTL: 60s)
+  - Team Roster: `roster:{teamId}:v{ver}` (TTL: 300s)
+- **Instant O(1) Invalidation**: Write mutations (shifts created/edited/deleted, member invited/removed, activity logged) invoke `bumpTeamVersion(teamId)`, atomically incrementing the team version integer. All stale entries across any date range or cursor instantly become unreachable and naturally expire via TTL without expensive Redis key scanning.
+- **Stampede Mutex Locking**: Cache misses acquire a short-lived mutex (`lock:{key}`, TTL 5000ms, `NX`). Only one worker thread executes the database query; concurrent callers wait and read the freshly warmed cache.
+
+#### Caching Policy: What is Cached vs. Never Cached
+
+| Data Entity | Cached? | Storage Key / Policy | Invalidation Trigger |
+|---|---|---|---|
+| Activity Feed Pages | **YES** | `feed:{teamId}:v{ver}:{cursor}:{limit}` (15s) | New activity logged / `bumpTeamVersion` |
+| Calendar Shifts | **YES** | `cal:{teamId}:v{ver}:{from}:{to}` (60s) | Shift create, update, delete |
+| Team Member Roster | **YES** | `roster:{teamId}:v{ver}` (300s) | Member invite, remove, role update |
+| **Subscription & Seat Status** | **NEVER** | *Always read from DB / Ledger* | N/A (Financial authority) |
+| **Payment Status & Balances** | **NEVER** | *Always read from DB / Ledger* | N/A (Rule 01 & Rule 02) |
+| **Role & Tenant Isolation Checks** | **NEVER** | *Always evaluated server-side per request* | N/A (Security authority) |
+| **Webhook Idempotency Keys** | **NEVER** | *Direct DB unique constraint* | N/A (Single-source truth) |
+
+---
+
+### Rate Limiting Engine (Proof Test T13)
+Sensitive endpoints are protected against brute-force and credential abuse using an atomic Redis Lua script:
+- **Algorithm**: Fixed-window rate limiting tracking request counts and TTL atomically.
+- **Enforced Routes**:
+  - `POST /v1/auth/login` and `POST /v1/auth/register`: 5 requests per 60 seconds (IP-keyed).
+  - `GET /v1/teams/:teamId/activity`: 120 requests per 60 seconds (User / IP-keyed).
+- **HTTP Response Headers**:
+  - `X-RateLimit-Limit`: Maximum requests per window.
+  - `X-RateLimit-Remaining`: Remaining allowance in current window.
+  - `X-RateLimit-Reset`: UNIX timestamp when the window resets.
+  - `Retry-After`: Seconds until quota reset when rejected (HTTP 429).
+- **Fail-Closed vs. Fail-Open**:
+  - Sensitive auth and billing endpoints **fail closed (503 Service Unavailable)** if Redis is unreachable.
+  - Read routes **fail open** with logged warnings to prioritize app read availability.
+
+---
+
+### Observability & Structured Request Logging
+The API server employs structured JSON logging middleware on every incoming request:
+- **Log Schema**:
+  ```json
+  {
+    "time": "2026-10-12T19:46:17.598Z",
+    "level": "info",
+    "requestId": "c1f7a08b-...",
+    "userId": "c21d2f3b-...",
+    "teamId": "3f5ad975-...",
+    "method": "GET",
+    "route": "/v1/teams/:teamId/activity",
+    "status": 200,
+    "durationMs": 1.45
+  }
+  ```
+- **Correlation**: `X-Request-Id` is echoed in all responses and attached to background BullMQ jobs.
+- **Redaction**: Strict redaction filters passwords, bearer tokens, and payment card details before serializing logs.
+
+---
+
+### 8. Load Test Evidence Summary (k6 with 200 VUs)
+Benchmarked using k6 against the `/v1/teams/:teamId/activity` endpoint with 10,050 seeded activity events and 200 concurrent virtual users (see [load-tests/REPORT.md](../load-tests/REPORT.md)):
+
+- **Cache OFF (Direct PostgreSQL)**: 7,393 requests, 113.2 req/s, avg latency 998.8 ms, p95 1,901.4 ms.
+- **Cache ON (Redis Cache-Aside)**: 15,211 requests (**2.06x throughput**), 232.3 req/s, avg latency 349.9 ms (**65% latency reduction**), p95 729.6 ms (**61.6% reduction**).
+- **Error Rate**: **0.00% across all 22,816 checks**.
+

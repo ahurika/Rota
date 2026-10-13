@@ -18,12 +18,14 @@ export async function runSeed() {
   ];
 
   for (const u of users) {
-    await primaryPool0.query(
+    const res = await primaryPool0.query<{ id: string }>(
       `INSERT INTO users (id, email, password_hash)
        VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO NOTHING`,
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash
+       RETURNING id`,
       [u.id, u.email, defaultPasswordHash]
     );
+    u.id = res.rows[0].id;
   }
 
   // 2. Create teams across both shards

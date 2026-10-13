@@ -9,3 +9,5 @@ build/
 google-services.json
 *.jks
 *.keystore
+*.exe
+load-tests/bin/

@@ -54,11 +54,14 @@ let redisClient: Redis | null = null;
 export function getRedisClient(): Redis {
   if (!redisClient) {
     redisClient = new Redis(env.REDIS_URL, {
-      lazyConnect: true,
-      enableOfflineQueue: false,
-      maxRetriesPerRequest: 0,
-      connectTimeout: 500,
-      retryStrategy: () => null,
+      lazyConnect: false,
+      enableOfflineQueue: true,
+      maxRetriesPerRequest: 1,
+      connectTimeout: 2000,
+      retryStrategy: (times) => {
+        if (times > 3) return null;
+        return Math.min(times * 100, 1000);
+      },
     });
     redisClient.on('error', (err: Error) => {
       logger.warn({ err: err.message }, 'Redis client connection error (falling back to primary)');

@@ -1,0 +1,20 @@
+=== PROOF TEST T13: REDIS RATE LIMITING & WINDOW RESET ===
+Date: 2026-10-12
+Command: vitest run rate_limit_t13
+Result: PASS
+
+RUN  v2.1.9 C:/Users/USER/Desktop/Rota/server
+
+ ✓ test/integration/rate_limit_t13.test.ts (2 tests) 1371ms
+   ✓ Proof Test T13: Redis Rate Limiting & Window Reset > T13: Enforces limit of 5, rejects 6th with 429 + Retry-After, and allows again after window resets 1358ms
+   ✓ Proof Test T13: Redis Rate Limiting & Window Reset > T13: Different client identifiers maintain completely independent rate limit counters 12ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Duration  6.11s
+
+Assertion Evidence:
+- Requests 1-5 returned HTTP 200 with X-RateLimit-Remaining decrementing from 4 to 0.
+- Request 6 returned HTTP 429 Too Many Requests with Retry-After: 1 and code RATE_LIMIT_EXCEEDED.
+- After waiting 1300ms (window expiry), Request 7 returned HTTP 200 with X-RateLimit-Remaining: 4.
+- Independent IP addresses (10.0.0.1 vs 10.0.0.2) maintained separate atomic counters.

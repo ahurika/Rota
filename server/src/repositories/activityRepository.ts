@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { dbForTeam } from '../db/shards.js';
+import { bumpTeamVersion } from '../lib/cache.js';
 
 export interface ActivityEventRow {
   id: string; // BIGINT as string
@@ -40,14 +41,18 @@ export const activityRepository = {
       params.createdAt ?? null,
     ];
 
+    let created: ActivityEventRow;
     if (client) {
       const res = await client.query<ActivityEventRow>(query, values);
-      return res.rows[0];
+      created = res.rows[0];
+    } else {
+      const pool = await dbForTeam(params.teamId);
+      const res = await pool.query<ActivityEventRow>(query, values);
+      created = res.rows[0];
     }
 
-    const pool = await dbForTeam(params.teamId);
-    const res = await pool.query<ActivityEventRow>(query, values);
-    return res.rows[0];
+    await bumpTeamVersion(params.teamId);
+    return created;
   },
 
   /**

@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { dbForTeam } from '../db/shards.js';
+import { bumpTeamVersion, getTeamVersion, cached, TTL } from '../lib/cache.js';
 
 export interface ShiftRow {
   id: string;
@@ -38,6 +39,7 @@ export const shiftsRepository = {
         params.note ?? null,
       ]
     );
+    await bumpTeamVersion(params.teamId);
     return res.rows[0];
   },
 
@@ -51,18 +53,25 @@ export const shiftsRepository = {
   },
 
   async listShifts(teamId: string, from?: Date, to?: Date): Promise<ShiftRow[]> {
-    const pool = await dbForTeam(teamId);
-    let query = `SELECT * FROM shifts WHERE team_id = $1`;
-    const params: any[] = [teamId];
+    const fromStr = from ? from.toISOString() : 'all';
+    const toStr = to ? to.toISOString() : 'all';
+    const ver = await getTeamVersion(teamId);
+    const key = `cal:${teamId}:v${ver}:${fromStr}:${toStr}`;
 
-    if (from && to) {
-      query += ` AND starts_at >= $2 AND starts_at <= $3`;
-      params.push(from, to);
-    }
-    query += ` ORDER BY starts_at ASC`;
+    return cached<ShiftRow[]>(key, TTL.CALENDAR, async () => {
+      const pool = await dbForTeam(teamId);
+      let query = `SELECT * FROM shifts WHERE team_id = $1`;
+      const params: any[] = [teamId];
 
-    const res = await pool.query<ShiftRow>(query, params);
-    return res.rows;
+      if (from && to) {
+        query += ` AND starts_at >= $2 AND starts_at <= $3`;
+        params.push(from, to);
+      }
+      query += ` ORDER BY starts_at ASC`;
+
+      const res = await pool.query<ShiftRow>(query, params);
+      return res.rows;
+    });
   },
 
   async updateShift(
@@ -98,6 +107,9 @@ export const shiftsRepository = {
         params.note,
       ]
     );
+    if (res.rows.length > 0) {
+      await bumpTeamVersion(teamId);
+    }
     return res.rows[0] ?? null;
   },
 
@@ -107,6 +119,10 @@ export const shiftsRepository = {
       `DELETE FROM shifts WHERE id = $1 AND team_id = $2`,
       [shiftId, teamId]
     );
-    return (res.rowCount ?? 0) > 0;
+    const deleted = (res.rowCount ?? 0) > 0;
+    if (deleted) {
+      await bumpTeamVersion(teamId);
+    }
+    return deleted;
   },
 };
