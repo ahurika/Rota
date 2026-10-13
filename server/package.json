@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:proration": "vitest run test/unit/proration.test.ts",
+    "test:proration": "vitest run test/unit/proration_t3.test.ts",
     "lint": "tsc --noEmit",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
