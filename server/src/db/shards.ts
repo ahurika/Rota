@@ -22,7 +22,7 @@ export function hashShard(teamId: string): number {
 // Connection pool configuration per ADR-003 and backend standards
 const poolConfig: pg.PoolConfig = {
   max: 10,
-  connectionTimeoutMillis: 3000,
+  connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
 };
 
