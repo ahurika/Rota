@@ -4,6 +4,7 @@ import { Text, TextInput, Button, HelperText, useTheme } from 'react-native-pape
 import { useRouter } from 'expo-router';
 import { secureStorage } from '../../src/lib/secureStore';
 import { apiClient } from '../../src/api/client';
+import { useUiStore } from '../../src/state/uiStore';
 import { PasswordField } from '../../src/ui/components/PasswordField';
 import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { toUxMessage } from '../../src/ui/errorMessages';
@@ -42,10 +43,18 @@ export default function LoginScreen() {
     try {
       setIsSubmitting(true);
       const res = await apiClient.post<any>('/v1/auth/login', { email, password });
-      if (res.tokens) {
-        await secureStorage.setAccessToken(res.tokens.accessToken);
-        await secureStorage.setRefreshToken(res.tokens.refreshToken);
-      }
+      const access = res.accessToken || res.tokens?.accessToken;
+      const refresh = res.refreshToken || res.tokens?.refreshToken;
+      if (access) await secureStorage.setAccessToken(access);
+      if (refresh) await secureStorage.setRefreshToken(refresh);
+
+      try {
+        const teamsRes = await apiClient.get<{ teams: Array<{ id: string; name: string }> }>('/v1/teams');
+        if (teamsRes.teams && teamsRes.teams.length > 0) {
+          useUiStore.getState().setCurrentTeamId(teamsRes.teams[0].id);
+        }
+      } catch {}
+
       router.replace('/(tabs)/shifts');
     } catch (err: any) {
       const ux = toUxMessage(err?.code || 'INVALID_CREDENTIALS');
@@ -130,6 +139,19 @@ export default function LoginScreen() {
           style={styles.switchButton}
         >
           Don't have an account? Create one
+        </Button>
+
+        <Button
+          mode="contained-tonal"
+          icon="account-key-outline"
+          compact
+          onPress={() => {
+            setEmail('seed_owner_1@example.com');
+            setPassword('Password123!Secure');
+          }}
+          style={{ marginTop: 12, borderRadius: 12 }}
+        >
+          Use Demo Account (seed_owner_1)
         </Button>
       </ScrollView>
     </View>

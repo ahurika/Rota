@@ -1,22 +1,29 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
+import {
+  Text,
+  Card,
+  Button,
+  Chip,
+  ActivityIndicator,
+  useTheme,
+  Surface,
+} from 'react-native-paper';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useShifts, useRequestSwap, Shift } from './useShifts';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../ui/tokens';
+import { spacing, radii } from '../../ui/tokens';
 
 interface ShiftsViewProps {
   teamId: string;
 }
 
 export function ShiftsView({ teamId }: ShiftsViewProps) {
+  const theme = useTheme();
   const netInfo = useNetInfo();
   const isOffline = netInfo.isConnected === false;
 
@@ -27,7 +34,7 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
   });
 
   const lastUpdatedText = dataUpdatedAt
-    ? `Last updated ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    ? `Updated ${new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     : null;
 
   const handleRequestSwap = (shift: Shift) => {
@@ -39,50 +46,103 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* 1. Offline Banner */}
       {isOffline && (
-        <View style={styles.offlineBanner} testID="offline-banner">
-          <Text style={styles.offlineBannerText}>
-            You are offline. Showing cached shifts. Actions are disabled.
+        <Surface
+          style={[
+            styles.offlineBanner,
+            { backgroundColor: theme.colors.errorContainer },
+          ]}
+          elevation={0}
+          testID="offline-banner"
+        >
+          <Text
+            variant="labelMedium"
+            style={{ color: theme.colors.onErrorContainer, fontWeight: '600' }}
+          >
+            Offline. Showing cached shifts. Actions disabled.
           </Text>
-        </View>
+        </Surface>
       )}
 
       {/* Header Info */}
       <View style={styles.header}>
-        <Text style={styles.title}>Upcoming Shifts</Text>
-        {lastUpdatedText && (
-          <Text style={styles.lastUpdatedText} testID="last-updated-label">
-            {lastUpdatedText}
+        <View>
+          <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
+            Schedule
           </Text>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+            Upcoming team shifts & coverage
+          </Text>
+        </View>
+        {lastUpdatedText && (
+          <Chip
+            compact
+            icon="clock-outline"
+            style={{ backgroundColor: theme.colors.surfaceVariant }}
+            textStyle={{ fontSize: 11, color: theme.colors.onSurfaceVariant }}
+            testID="last-updated-label"
+          >
+            {lastUpdatedText}
+          </Chip>
         )}
       </View>
 
       {/* 2. Loading State */}
       {isLoading && (
         <View style={styles.centerContainer} testID="shifts-loading">
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={styles.subtleText}>Loading shifts...</Text>
+          <ActivityIndicator size="large" animating color={theme.colors.primary} />
+          <Text variant="bodyMedium" style={[styles.subtleText, { color: theme.colors.onSurfaceVariant }]}>
+            Loading team shifts...
+          </Text>
         </View>
       )}
 
       {/* 3. Error State */}
       {isError && !shifts && (
-        <View style={styles.centerContainer} testID="shifts-error">
-          <Text style={styles.errorText}>Unable to load shifts.</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()}>
-            <Text style={styles.retryBtnText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <Surface
+          style={[
+            styles.errorContainer,
+            { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant },
+          ]}
+          elevation={1}
+          testID="shifts-error"
+        >
+          <Text variant="titleMedium" style={{ color: theme.colors.error, fontWeight: '700' }}>
+            Unable to load shifts
+          </Text>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' }}>
+            Please check your connection or authentication.
+          </Text>
+          <Button
+            mode="contained-tonal"
+            icon="refresh"
+            style={{ marginTop: spacing.md }}
+            onPress={() => refetch()}
+          >
+            Retry
+          </Button>
+        </Surface>
       )}
 
       {/* 4. Shift List */}
       <ScrollView contentContainerStyle={styles.listContent}>
         {shifts?.length === 0 && (
-          <View style={styles.centerContainer}>
-            <Text style={styles.subtleText}>No upcoming shifts scheduled.</Text>
-          </View>
+          <Surface
+            style={[
+              styles.emptyCard,
+              { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant },
+            ]}
+            elevation={1}
+          >
+            <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+              No upcoming shifts
+            </Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+              Check back once the manager publishes the roster.
+            </Text>
+          </Surface>
         )}
 
         {shifts?.map((shift) => {
@@ -100,43 +160,64 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
           });
 
           return (
-            <View key={shift.id} style={styles.shiftCard} testID={`shift-card-${shift.id}`}>
-              <View style={styles.shiftInfo}>
-                <Text style={styles.shiftLabel}>{shift.label}</Text>
-                <Text style={styles.shiftHours}>
-                  {startTime} - {endTime}
-                </Text>
-                {shift.note && <Text style={styles.shiftNote}>{shift.note}</Text>}
-              </View>
+            <Card
+              key={shift.id}
+              mode="elevated"
+              style={[
+                styles.shiftCard,
+                {
+                  backgroundColor: theme.colors.elevation.level1,
+                  borderColor: theme.colors.outlineVariant,
+                },
+              ]}
+              testID={`shift-card-${shift.id}`}
+            >
+              <Card.Content style={styles.cardContent}>
+                <View style={styles.cardHeaderRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="titleMedium" style={[styles.shiftLabel, { color: theme.colors.onSurface }]}>
+                      {shift.label}
+                    </Text>
+                    <View style={styles.timeRow}>
+                      <Chip
+                        icon="calendar-clock"
+                        compact
+                        style={[styles.timeChip, { backgroundColor: theme.colors.secondaryContainer }]}
+                        textStyle={{ color: theme.colors.onSecondaryContainer, fontSize: 12, fontWeight: '600' }}
+                      >
+                        {startTime} – {endTime}
+                      </Chip>
+                    </View>
+                    {shift.note && (
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>
+                        {shift.note}
+                      </Text>
+                    )}
+                  </View>
 
-              <TouchableOpacity
-                style={[
-                  styles.swapButton,
-                  isPendingSwap && styles.swapButtonPending,
-                  isOffline && styles.swapButtonDisabled,
-                ]}
-                onPress={() => handleRequestSwap(shift)}
-                disabled={isPendingSwap || isOffline}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isPendingSwap
-                    ? 'Swap request pending'
-                    : isOffline
-                    ? 'Swap disabled offline'
-                    : `Request swap for ${shift.label}`
-                }
-                testID={`swap-button-${shift.id}`}
-              >
-                <Text
-                  style={[
-                    styles.swapButtonText,
-                    isPendingSwap && styles.swapButtonTextPending,
-                  ]}
-                >
-                  {isPendingSwap ? 'Swap Pending' : isOffline ? 'Offline' : 'Request Swap'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <Button
+                    mode={isPendingSwap ? 'outlined' : 'contained-tonal'}
+                    compact
+                    loading={swapMutation.isPending && swapMutation.variables?.shiftId === shift.id}
+                    disabled={isPendingSwap || isOffline}
+                    onPress={() => handleRequestSwap(shift)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isPendingSwap
+                        ? 'Swap request pending'
+                        : isOffline
+                        ? 'Swap disabled offline'
+                        : `Request swap for ${shift.label}`
+                    }
+                    testID={`swap-button-${shift.id}`}
+                    style={styles.swapBtn}
+                    labelStyle={{ fontSize: 12, fontWeight: '600' }}
+                  >
+                    {isPendingSwap ? 'Pending' : isOffline ? 'Offline' : 'Swap'}
+                  </Button>
+                </View>
+              </Card.Content>
+            </Card>
           );
         })}
       </ScrollView>
@@ -147,35 +228,23 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.background,
   },
   offlineBanner: {
-    backgroundColor: theme.warningSurface,
-    borderColor: theme.warning,
-    borderBottomWidth: 1,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
   },
-  offlineBannerText: {
-    color: theme.warning,
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-  },
   header: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: theme.textPrimary,
-  },
-  lastUpdatedText: {
-    fontSize: typography.sizes.xs,
-    color: theme.textMuted,
-    marginTop: spacing.xxs,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   centerContainer: {
     paddingVertical: spacing.xxl,
@@ -183,86 +252,54 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   subtleText: {
-    fontSize: typography.sizes.sm,
-    color: theme.textSecondary,
     marginTop: spacing.sm,
   },
-  errorText: {
-    fontSize: typography.sizes.sm,
-    color: theme.danger,
-    marginBottom: spacing.md,
-  },
-  retryBtn: {
-    backgroundColor: theme.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.md,
-    minHeight: layout.minTouchTarget,
-    justifyContent: 'center',
+  errorContainer: {
+    margin: spacing.lg,
+    padding: spacing.xl,
+    borderRadius: radii.lg,
+    borderWidth: 1,
     alignItems: 'center',
   },
-  retryBtnText: {
-    color: theme.textInverse,
-    fontWeight: typography.weights.semibold,
+  emptyCard: {
+    padding: spacing.xl,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginTop: spacing.md,
   },
   listContent: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
   },
   shiftCard: {
-    backgroundColor: theme.surface,
-    padding: spacing.md,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: theme.border,
-    marginBottom: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
   },
-  shiftInfo: {
-    flex: 1,
-    marginRight: spacing.md,
+  cardContent: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   shiftLabel: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: theme.textPrimary,
+    fontWeight: '700',
   },
-  shiftHours: {
-    fontSize: typography.sizes.sm,
-    color: theme.textSecondary,
-    marginTop: spacing.xxs,
+  timeRow: {
+    flexDirection: 'row',
+    marginTop: 6,
   },
-  shiftNote: {
-    fontSize: typography.sizes.xs,
-    color: theme.textMuted,
-    marginTop: spacing.xxs,
+  timeChip: {
+    borderRadius: 8,
   },
-  swapButton: {
-    backgroundColor: theme.primarySurface,
-    borderColor: theme.primary,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-    minHeight: layout.minTouchTarget,
+  swapBtn: {
+    marginLeft: spacing.sm,
+    minHeight: 40,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  swapButtonPending: {
-    backgroundColor: theme.warningSurface,
-    borderColor: theme.warning,
-  },
-  swapButtonDisabled: {
-    backgroundColor: theme.surfaceSubtle,
-    borderColor: theme.border,
-  },
-  swapButtonText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-    color: theme.primary,
-  },
-  swapButtonTextPending: {
-    color: theme.warning,
   },
 });

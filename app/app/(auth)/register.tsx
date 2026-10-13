@@ -46,10 +46,10 @@ export default function RegisterScreen() {
     try {
       setIsSubmitting(true);
       const res = await apiClient.post<any>('/v1/auth/register', { email, password, name });
-      if (res.tokens) {
-        await secureStorage.setAccessToken(res.tokens.accessToken);
-        await secureStorage.setRefreshToken(res.tokens.refreshToken);
-      }
+      const access = res.accessToken || res.tokens?.accessToken;
+      const refresh = res.refreshToken || res.tokens?.refreshToken;
+      if (access) await secureStorage.setAccessToken(access);
+      if (refresh) await secureStorage.setRefreshToken(refresh);
       setIsSuccessDialogOpen(true);
     } catch (err: any) {
       const ux = toUxMessage(err?.code);

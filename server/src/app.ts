@@ -13,6 +13,7 @@ import { webhooksRouter } from './routes/webhooks.js';
 import { settingsRouter } from './routes/settings.js';
 import { devicesRouter } from './routes/devices.js';
 
+import { cors } from 'hono/cors';
 import { observability } from './middleware/observability.js';
 
 export type AppVariables = {
@@ -20,6 +21,14 @@ export type AppVariables = {
 };
 
 export const app = new Hono<{ Variables: AppVariables }>();
+
+// Enable CORS for mobile web and local developer tooling
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'x-request-id'],
+  exposeHeaders: ['Content-Length', 'x-request-id', 'Retry-After'],
+}));
 
 // 1. Structured request observability (requestId, durationMs, route pattern, user/team tracking)
 app.use('*', observability());

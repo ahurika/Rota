@@ -7,12 +7,14 @@ import { QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { queryClient } from '../src/query/queryClient';
 import { lightTheme as paperLightTheme, darkTheme as paperDarkTheme } from '../src/ui/theme';
 import { SnackbarProvider } from '../src/ui/components/SnackbarProvider';
-import { lightTheme as theme } from '../src/ui/tokens';
+import { useUiStore } from '../src/state/uiStore';
 import { usePushNotifications } from '../src/notifications/usePushNotifications';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const paperTheme = colorScheme === 'dark' ? paperDarkTheme : paperLightTheme;
+  const themeMode = useUiStore((s) => s.themeMode);
+  const isDark = themeMode === 'dark' || (themeMode === 'system' && colorScheme === 'dark');
+  const paperTheme = isDark ? paperDarkTheme : paperLightTheme;
 
   // Register push notifications on launch
   usePushNotifications();
@@ -31,13 +33,13 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <PaperProvider theme={paperTheme}>
         <SnackbarProvider>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
           <Stack
             screenOptions={{
-              headerStyle: { backgroundColor: theme.background },
-              headerTintColor: theme.text,
+              headerStyle: { backgroundColor: paperTheme.colors.elevation.level1 },
+              headerTintColor: paperTheme.colors.onSurface,
               headerTitleStyle: { fontWeight: '600' },
-              contentStyle: { backgroundColor: theme.background },
+              contentStyle: { backgroundColor: paperTheme.colors.background },
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

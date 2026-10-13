@@ -1,48 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+} from 'react-native';
+import {
+  Text,
   Switch,
   ActivityIndicator,
-  Alert,
-} from 'react-native';
+  useTheme,
+  Surface,
+  SegmentedButtons,
+  Button,
+  Divider,
+} from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { secureStorage } from '../../src/lib/secureStore';
 import { queryClient } from '../../src/query/queryClient';
 import { useUiStore } from '../../src/state/uiStore';
 import { useSettings, useUpdateSettings } from '../../src/features/settings/useSettings';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens';
+import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
+import { spacing, radii } from '../../src/ui/tokens';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const resetUi = useUiStore((s) => s.resetUi);
+  const themeMode = useUiStore((s) => s.themeMode);
+  const setThemeMode = useUiStore((s) => s.setThemeMode);
+
   const { data: settings, isLoading } = useSettings();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+
+  // Sync theme from server settings if available
+  useEffect(() => {
+    if (settings?.theme && settings.theme !== themeMode) {
+      setThemeMode(settings.theme);
+    }
+  }, [settings?.theme]);
 
   const updateMutation = useUpdateSettings({
-    onError: (err) => {
-      setErrorMessage('Failed to save settings. Reverted.');
-      setTimeout(() => setErrorMessage(null), 3000);
+    onError: () => {
+      setErrorMessage('Failed to save settings to server. Reverted.');
+      setTimeout(() => setErrorMessage(null), 3500);
     },
   });
 
-  const handleLogout = async () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out of Rota?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          await secureStorage.clearTokens();
-          queryClient.clear();
-          resetUi();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+  const handleLogoutConfirm = async () => {
+    setIsLogoutDialogOpen(false);
+    await secureStorage.clearTokens();
+    queryClient.clear();
+    resetUi();
+    router.replace('/(auth)/login');
   };
 
   const handleToggleNotif = (key: 'shift_changes' | 'swaps' | 'billing') => {
@@ -55,26 +65,26 @@ export default function SettingsScreen() {
     });
   };
 
-  const handleThemeChange = (newTheme: 'system' | 'light' | 'dark') => {
-    updateMutation.mutate({ theme: newTheme });
+  const handleThemeChange = (newTheme: string) => {
+    const validTheme = newTheme as 'system' | 'light' | 'dark';
+    setThemeMode(validTheme);
+    updateMutation.mutate({ theme: validTheme });
   };
 
   const handleToggleQuietHours = () => {
     if (!settings) return;
     const isCurrentlyOff = settings.quietStart === settings.quietEnd;
     if (isCurrentlyOff) {
-      // Turn on default 22:00 to 06:00
       updateMutation.mutate({ quietStart: '22:00', quietEnd: '06:00' });
     } else {
-      // Turn off by setting start === end
       updateMutation.mutate({ quietStart: '00:00', quietEnd: '00:00' });
     }
   };
 
   if (isLoading && !settings) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" animating color={theme.colors.primary} />
       </View>
     );
   }
@@ -82,60 +92,148 @@ export default function SettingsScreen() {
   const quietHoursActive = settings ? settings.quietStart !== settings.quietEnd : false;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      contentContainerStyle={styles.contentContainer}
+    >
+      <View style={styles.header}>
+        <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
+          Settings
+        </Text>
+        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+          Preferences, alerts & app appearance
+        </Text>
+      </View>
+
       {errorMessage && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorBannerText}>{errorMessage}</Text>
-        </View>
+        <Surface
+          style={[styles.errorBanner, { backgroundColor: theme.colors.errorContainer }]}
+          elevation={0}
+        >
+          <Text variant="bodySmall" style={{ color: theme.colors.onErrorContainer, fontWeight: '600' }}>
+            {errorMessage}
+          </Text>
+        </Surface>
       )}
 
+      {/* Appearance Section */}
+      <Surface
+        style={[
+          styles.section,
+          {
+            backgroundColor: theme.colors.elevation.level1,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+        elevation={1}
+      >
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          Appearance
+        </Text>
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: spacing.md }}>
+          Choose your interface color mode
+        </Text>
+
+        <SegmentedButtons
+          value={themeMode}
+          onValueChange={handleThemeChange}
+          buttons={[
+            { value: 'system', label: 'System', icon: 'brightness-auto' },
+            { value: 'light', label: 'Light', icon: 'white-balance-sunny' },
+            { value: 'dark', label: 'Dark', icon: 'moon-waning-crescent' },
+          ]}
+        />
+      </Surface>
+
       {/* Notifications Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notification Alerts</Text>
+      <Surface
+        style={[
+          styles.section,
+          {
+            backgroundColor: theme.colors.elevation.level1,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+        elevation={1}
+      >
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          Push Notifications
+        </Text>
+
         <View style={styles.switchRow}>
           <View style={styles.labelCol}>
-            <Text style={styles.rowLabel}>Shift Changes</Text>
-            <Text style={styles.rowSubtitle}>Notified when assigned or updated</Text>
+            <Text variant="bodyLarge" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+              Shift Changes
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              Alerts when shifts are assigned or changed
+            </Text>
           </View>
           <Switch
             value={settings?.notifTypes?.shift_changes ?? true}
             onValueChange={() => handleToggleNotif('shift_changes')}
-            trackColor={{ false: theme.border, true: theme.primary }}
+            color={theme.colors.primary}
           />
         </View>
 
+        <Divider style={{ marginVertical: spacing.sm }} />
+
         <View style={styles.switchRow}>
           <View style={styles.labelCol}>
-            <Text style={styles.rowLabel}>Shift Swaps</Text>
-            <Text style={styles.rowSubtitle}>Swap offers, responses, and approvals</Text>
+            <Text variant="bodyLarge" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+              Shift Swaps
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              Swap offers, responses & approvals
+            </Text>
           </View>
           <Switch
             value={settings?.notifTypes?.swaps ?? true}
             onValueChange={() => handleToggleNotif('swaps')}
-            trackColor={{ false: theme.border, true: theme.primary }}
+            color={theme.colors.primary}
           />
         </View>
 
+        <Divider style={{ marginVertical: spacing.sm }} />
+
         <View style={styles.switchRow}>
           <View style={styles.labelCol}>
-            <Text style={styles.rowLabel}>Billing Updates</Text>
-            <Text style={styles.rowSubtitle}>Invoices, renewals, and payment alerts</Text>
+            <Text variant="bodyLarge" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+              Billing Alerts
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              Renewals, invoices & seat changes
+            </Text>
           </View>
           <Switch
             value={settings?.notifTypes?.billing ?? true}
             onValueChange={() => handleToggleNotif('billing')}
-            trackColor={{ false: theme.border, true: theme.primary }}
+            color={theme.colors.primary}
           />
         </View>
-      </View>
+      </Surface>
 
       {/* Quiet Hours Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quiet Hours (Sleep Schedule)</Text>
+      <Surface
+        style={[
+          styles.section,
+          {
+            backgroundColor: theme.colors.elevation.level1,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+        elevation={1}
+      >
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          Quiet Hours
+        </Text>
+
         <View style={styles.switchRow}>
           <View style={styles.labelCol}>
-            <Text style={styles.rowLabel}>Enable Quiet Hours</Text>
-            <Text style={styles.rowSubtitle}>
+            <Text variant="bodyLarge" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+              Sleep Schedule
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
               {quietHoursActive
                 ? `${settings?.quietStart} to ${settings?.quietEnd} (${settings?.timezone})`
                 : 'Disabled (alerts arrive immediately)'}
@@ -144,50 +242,41 @@ export default function SettingsScreen() {
           <Switch
             value={quietHoursActive}
             onValueChange={handleToggleQuietHours}
-            trackColor={{ false: theme.border, true: theme.primary }}
+            color={theme.colors.primary}
           />
         </View>
+
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Time Zone</Text>
-          <Text style={styles.infoValue}>{settings?.timezone ?? 'UTC'}</Text>
+          <Text variant="labelMedium" style={{ color: theme.colors.outline }}>
+            Time Zone
+          </Text>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+            {settings?.timezone ?? 'UTC'}
+          </Text>
         </View>
-      </View>
+      </Surface>
 
-      {/* Appearance Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Appearance & Theme</Text>
-        <View style={styles.themeRow}>
-          {(['system', 'light', 'dark'] as const).map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[
-                styles.themeOption,
-                settings?.theme === t && styles.themeOptionActive,
-              ]}
-              onPress={() => handleThemeChange(t)}
-            >
-              <Text
-                style={[
-                  styles.themeOptionText,
-                  settings?.theme === t && styles.themeOptionTextActive,
-                ]}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Account / Logout Section */}
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={handleLogout}
-        accessibilityRole="button"
-        accessibilityLabel="Log out of Rota"
+      {/* Account / Logout Button */}
+      <Button
+        mode="outlined"
+        icon="logout"
+        textColor={theme.colors.error}
+        style={[styles.logoutBtn, { borderColor: theme.colors.error }]}
+        onPress={() => setIsLogoutDialogOpen(true)}
       >
-        <Text style={styles.logoutButtonText}>Log Out</Text>
-      </TouchableOpacity>
+        Log Out
+      </Button>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        visible={isLogoutDialogOpen}
+        title="Log Out"
+        message="Are you sure you want to log out of Rota on this device?"
+        confirmLabel="Log Out"
+        destructive
+        onConfirm={handleLogoutConfirm}
+        onDismiss={() => setIsLogoutDialogOpen(false)}
+      />
     </ScrollView>
   );
 }
@@ -195,118 +284,60 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.background,
   },
   contentContainer: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
+    gap: spacing.md,
+  },
+  header: {
+    marginBottom: spacing.xs,
+  },
+  title: {
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.background,
+    justifyContent: 'center',
   },
   errorBanner: {
-    backgroundColor: '#FEE2E2',
-    padding: spacing.sm,
-    borderRadius: radii.sm,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: '#F87171',
-  },
-  errorBannerText: {
-    ...typography.bodySmall,
-    color: theme.error,
-    textAlign: 'center',
-    fontWeight: '600',
+    padding: spacing.md,
+    borderRadius: radii.md,
+    alignItems: 'center',
   },
   section: {
-    backgroundColor: theme.surface,
-    borderRadius: radii.md,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: theme.border,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.h3,
-    color: theme.text,
-    marginBottom: spacing.md,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
+    paddingVertical: spacing.xs,
   },
   labelCol: {
     flex: 1,
     marginRight: spacing.md,
   },
-  rowLabel: {
-    ...typography.body,
-    fontWeight: '600',
-    color: theme.text,
-  },
-  rowSubtitle: {
-    ...typography.bodySmall,
-    color: theme.textMuted,
-    marginTop: 2,
-  },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.md,
     paddingTop: spacing.sm,
   },
-  infoLabel: {
-    ...typography.body,
-    color: theme.textMuted,
-  },
-  infoValue: {
-    ...typography.body,
-    color: theme.text,
-    fontWeight: '500',
-  },
-  themeRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  themeOption: {
-    flex: 1,
-    minHeight: layout.minTouchTarget,
-    borderWidth: 1,
-    borderColor: theme.border,
-    borderRadius: radii.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  themeOptionActive: {
-    backgroundColor: theme.primary,
-    borderColor: theme.primary,
-  },
-  themeOptionText: {
-    ...typography.body,
-    color: theme.text,
-  },
-  themeOptionTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  logoutButton: {
-    minHeight: layout.minTouchTarget,
-    backgroundColor: '#FEE2E2',
-    borderRadius: radii.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
+  logoutBtn: {
     marginTop: spacing.md,
-  },
-  logoutButtonText: {
-    ...typography.button,
-    color: theme.error,
+    minHeight: 48,
+    justifyContent: 'center',
+    borderRadius: radii.lg,
   },
 });

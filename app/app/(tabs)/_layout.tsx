@@ -1,8 +1,9 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Tabs, useRouter } from 'expo-router';
 import { Icon } from 'react-native-paper';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { AppTabBar } from '../../src/ui/components/AppTabBar';
+import { secureStorage } from '../../src/lib/secureStore';
 
 function tabIcon(on: string, off: string) {
   return ({ color, focused }: { color: string; focused: boolean }) => (
@@ -11,6 +12,16 @@ function tabIcon(on: string, off: string) {
 }
 
 export default function TabsLayout() {
+  const router = useRouter();
+
+  useEffect(() => {
+    secureStorage.getAccessToken().then((token) => {
+      if (!token) {
+        router.replace('/(auth)/login');
+      }
+    });
+  }, []);
+
   // Pending approvals count for managers/owners (badge on Swaps)
   const pendingSwapsCount = 2;
 

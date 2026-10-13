@@ -6,13 +6,28 @@ import { BottomNavigation } from 'react-native-paper';
 export type AppTabBarProps = BottomTabBarProps & { badges?: Record<string, number | boolean | undefined> };
 
 export function AppTabBar({ navigation, state, descriptors, insets, badges = {} }: AppTabBarProps) {
+  const visibleRoutes = state.routes.filter((route) => {
+    const opts = descriptors[route.key]?.options;
+    return (opts as any)?.href !== null && route.name !== 'index';
+  });
+
+  const activeRouteKey = state.routes[state.index]?.key;
+  const activeIndex = visibleRoutes.findIndex((r) => r.key === activeRouteKey);
+  const filteredIndex = activeIndex >= 0 ? activeIndex : 0;
+
+  const filteredState = {
+    ...state,
+    index: filteredIndex,
+    routes: visibleRoutes,
+  };
+
   return (
     <BottomNavigation.Bar
-      navigationState={state as any}
+      navigationState={filteredState as any}
       safeAreaInsets={insets}
       labeled
       onTabPress={({ route, preventDefault }) => {
-        const navRoute = state.routes.find((r) => r.key === route.key);
+        const navRoute = visibleRoutes.find((r) => r.key === route.key);
         const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
         if (event.defaultPrevented) {
           preventDefault();
