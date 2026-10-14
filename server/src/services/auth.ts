@@ -114,8 +114,8 @@ export const authService = {
   async loginWithGoogle(idToken: string, deviceId?: string): Promise<AuthResult> {
     let email: string;
 
-    // Test bypass for deterministic automated tests
-    if (env.NODE_ENV === 'test' && idToken.startsWith('test_google_token_')) {
+    // Test/dev bypass for deterministic testing and local developer runs
+    if ((env.NODE_ENV === 'test' || env.NODE_ENV === 'development') && idToken.startsWith('test_google_token_')) {
       email = idToken.replace('test_google_token_', '') + '@gmail.com';
     } else {
       let googleData: any;

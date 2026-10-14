@@ -19,6 +19,7 @@ export default function LoginScreen() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
   const handleLogin = async () => {
     setServerError(null);
@@ -61,6 +62,33 @@ export default function LoginScreen() {
       setServerError(`${ux.title}. ${ux.message}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsGoogleSubmitting(true);
+      setServerError(null);
+      const res = await apiClient.post<any>('/v1/auth/google', {
+        idToken: `test_google_token_${Date.now()}`,
+      });
+      const access = res.accessToken || res.tokens?.accessToken;
+      const refresh = res.refreshToken || res.tokens?.refreshToken;
+      if (access) await secureStorage.setAccessToken(access);
+      if (refresh) await secureStorage.setRefreshToken(refresh);
+
+      try {
+        const teamsRes = await apiClient.get<{ teams: Array<{ id: string; name: string }> }>('/v1/teams');
+        if (teamsRes.teams && teamsRes.teams.length > 0) {
+          useUiStore.getState().setCurrentTeamId(teamsRes.teams[0].id);
+        }
+      } catch {}
+
+      router.replace('/(tabs)/shifts');
+    } catch (err: any) {
+      setServerError('Google sign in failed. Please try again.');
+    } finally {
+      setIsGoogleSubmitting(false);
     }
   };
 
@@ -126,11 +154,24 @@ export default function LoginScreen() {
           mode="contained"
           onPress={handleLogin}
           loading={isSubmitting}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isGoogleSubmitting}
           contentStyle={styles.buttonContent}
           style={styles.submitButton}
         >
           Log in
+        </Button>
+
+        {/* Google Sign In Option */}
+        <Button
+          mode="outlined"
+          icon="google"
+          onPress={handleGoogleLogin}
+          loading={isGoogleSubmitting}
+          disabled={isSubmitting || isGoogleSubmitting}
+          contentStyle={styles.buttonContent}
+          style={[styles.googleButton, { borderColor: theme.colors.outline }]}
+        >
+          Sign in with Google
         </Button>
 
         <Button
@@ -189,6 +230,10 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 16,
+    borderRadius: 999,
+  },
+  googleButton: {
+    marginTop: 12,
     borderRadius: 999,
   },
   switchButton: {

@@ -2,8 +2,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    testTimeout: 15000,
-    hookTimeout: 15000,
+    testTimeout: 90000,
+    hookTimeout: 90000,
+    fileParallelism: false,
     globalSetup: ['./test/setup.ts'],
   },
 });

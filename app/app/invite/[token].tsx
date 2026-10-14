@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import { Text, Card, Button, Avatar, useTheme } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
 import { useUiStore } from '../../src/state/uiStore';
-import { lightTheme as theme, spacing, radii, typography, layout } from '../../src/ui/tokens';
+import { spacing, radii } from '../../src/ui/tokens';
 
 export default function InviteScreen() {
+  const theme = useTheme();
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
@@ -34,27 +36,51 @@ export default function InviteScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Team Invitation</Text>
-        <Text style={styles.subtitle}>
-          You have been invited to join a team on Rota. Tap below to accept and view your shifts.
-        </Text>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <Card
+        mode="elevated"
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.colors.elevation.level1,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+      >
+        <Card.Content style={styles.cardContent}>
+          <Avatar.Icon
+            size={56}
+            icon="account-group-outline"
+            style={{ backgroundColor: theme.colors.primaryContainer, alignSelf: 'center', marginBottom: spacing.md }}
+            color={theme.colors.onPrimaryContainer}
+          />
+          <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
+            Team Invitation
+          </Text>
+          <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+            You have been invited to join a team on Rota. Accept below to onboard and view your upcoming shifts.
+          </Text>
 
-        <TouchableOpacity
-          style={styles.joinButton}
-          onPress={handleAcceptInvite}
-          disabled={isJoining}
-          accessibilityRole="button"
-          accessibilityLabel="Accept invitation"
-        >
-          {isJoining ? (
-            <ActivityIndicator color={theme.surface} />
-          ) : (
-            <Text style={styles.joinButtonText}>Join Team</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          <Button
+            mode="contained"
+            onPress={handleAcceptInvite}
+            loading={isJoining}
+            disabled={isJoining}
+            style={styles.joinButton}
+            contentStyle={{ minHeight: 48 }}
+          >
+            Accept & Join Team
+          </Button>
+
+          <Button
+            mode="text"
+            onPress={() => router.replace('/(tabs)/shifts')}
+            style={{ marginTop: spacing.sm }}
+          >
+            Decline
+          </Button>
+        </Card.Content>
+      </Card>
     </View>
   );
 }
@@ -62,39 +88,28 @@ export default function InviteScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.background,
     justifyContent: 'center',
-    padding: spacing.lg,
+    padding: spacing.xl,
   },
   card: {
-    backgroundColor: theme.surface,
-    padding: spacing.xl,
-    borderRadius: radii.md,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: theme.border,
+  },
+  cardContent: {
+    padding: spacing.xl,
     alignItems: 'center',
   },
   title: {
-    ...typography.h2,
-    color: theme.text,
+    fontWeight: '800',
+    textAlign: 'center',
     marginBottom: spacing.xs,
   },
   subtitle: {
-    ...typography.body,
-    color: theme.textMuted,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },
   joinButton: {
-    minHeight: layout.minTouchTarget,
     width: '100%',
-    backgroundColor: theme.primary,
-    borderRadius: radii.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  joinButtonText: {
-    ...typography.button,
-    color: theme.surface,
+    borderRadius: radii.lg,
   },
 });

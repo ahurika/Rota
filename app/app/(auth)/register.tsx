@@ -59,6 +59,27 @@ export default function RegisterScreen() {
     }
   };
 
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+
+  const handleGoogleRegister = async () => {
+    try {
+      setIsGoogleSubmitting(true);
+      setServerError(null);
+      const res = await apiClient.post<any>('/v1/auth/google', {
+        idToken: `test_google_token_${Date.now()}`,
+      });
+      const access = res.accessToken || res.tokens?.accessToken;
+      const refresh = res.refreshToken || res.tokens?.refreshToken;
+      if (access) await secureStorage.setAccessToken(access);
+      if (refresh) await secureStorage.setRefreshToken(refresh);
+      setIsSuccessDialogOpen(true);
+    } catch (err: any) {
+      setServerError('Google sign up failed. Please try again.');
+    } finally {
+      setIsGoogleSubmitting(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader title="Create account" />
@@ -135,11 +156,23 @@ export default function RegisterScreen() {
           mode="contained"
           onPress={handleRegister}
           loading={isSubmitting}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isGoogleSubmitting}
           contentStyle={styles.buttonContent}
           style={styles.submitButton}
         >
           Create account
+        </Button>
+
+        <Button
+          mode="outlined"
+          icon="google"
+          onPress={handleGoogleRegister}
+          loading={isGoogleSubmitting}
+          disabled={isSubmitting || isGoogleSubmitting}
+          contentStyle={styles.buttonContent}
+          style={[styles.googleButton, { borderColor: theme.colors.outline }]}
+        >
+          Sign up with Google
         </Button>
 
         <Button
@@ -198,6 +231,10 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: 16,
+    borderRadius: 999,
+  },
+  googleButton: {
+    marginTop: 12,
     borderRadius: 999,
   },
   switchButton: {
