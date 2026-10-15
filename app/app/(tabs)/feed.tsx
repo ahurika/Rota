@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { ActivityFeedList } from '../../src/features/feed/ActivityFeedList';
 import { useUiStore } from '../../src/state/uiStore';
 
@@ -10,6 +11,7 @@ export default function FeedScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title="Activity" />
       <ActivityFeedList teamId={currentTeamId} />
     </View>
   );

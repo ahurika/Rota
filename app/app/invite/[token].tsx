@@ -4,6 +4,7 @@ import { Text, Card, Button, Avatar, useTheme } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { apiClient } from '../../src/api/client';
 import { useUiStore } from '../../src/state/uiStore';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { spacing, radii } from '../../src/ui/tokens';
 
 export default function InviteScreen() {
@@ -37,7 +38,12 @@ export default function InviteScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Card
+      <ScreenHeader
+        title="Team Invitation"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/shifts'))}
+      />
+      <View style={styles.cardContainer}>
+        <Card
         mode="elevated"
         style={[
           styles.card,
@@ -81,12 +87,16 @@ export default function InviteScreen() {
           </Button>
         </Card.Content>
       </Card>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  cardContainer: {
     flex: 1,
     justifyContent: 'center',
     padding: spacing.xl,

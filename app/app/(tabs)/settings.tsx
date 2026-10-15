@@ -20,6 +20,7 @@ import { queryClient } from '../../src/query/queryClient';
 import { useUiStore } from '../../src/state/uiStore';
 import { useSettings, useUpdateSettings } from '../../src/features/settings/useSettings';
 import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
+import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { spacing, radii } from '../../src/ui/tokens';
 
 export default function SettingsScreen() {
@@ -92,18 +93,12 @@ export default function SettingsScreen() {
   const quietHoursActive = settings ? settings.quietStart !== settings.quietEnd : false;
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.header}>
-        <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
-          Settings
-        </Text>
-        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-          Preferences, alerts & app appearance
-        </Text>
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScreenHeader title="Settings" />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.contentContainer}
+      >
 
       {errorMessage && (
         <Surface
@@ -278,6 +273,7 @@ export default function SettingsScreen() {
         onDismiss={() => setIsLogoutDialogOpen(false)}
       />
     </ScrollView>
+    </View>
   );
 }
 

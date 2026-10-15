@@ -68,11 +68,8 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
 
       {/* Header Info */}
       <View style={styles.header}>
-        <View>
-          <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
-            Schedule
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             Upcoming team shifts & coverage
           </Text>
         </View>

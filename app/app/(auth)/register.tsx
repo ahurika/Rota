@@ -82,7 +82,7 @@ export default function RegisterScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScreenHeader title="Create account" />
+      <ScreenHeader title="Create account" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text variant="headlineSmall" style={[styles.headline, { color: theme.colors.onSurface }]}>
           Join Rota
