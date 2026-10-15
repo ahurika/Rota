@@ -21,7 +21,7 @@ import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
 import { ResultDialog } from '../../src/ui/components/ResultDialog';
 import { useSnackbar } from '../../src/ui/components/SnackbarProvider';
 import { apiClient } from '../../src/api/client';
-import { useUiStore } from '../../src/state/uiStore';
+import { useActiveTeam } from '../../src/features/teams/useActiveTeam';
 import { spacing, radii } from '../../src/ui/tokens';
 
 type Member = {
@@ -35,7 +35,7 @@ type Member = {
 export default function TeamScreen() {
   const theme = useTheme();
   const snackbar = useSnackbar();
-  const currentTeamId = useUiStore((s) => s.currentTeamId) || '859a9351-a67e-4a0b-9ab4-c25ac5ef9d95';
+  const { currentTeamId, activeTeam } = useActiveTeam();
 
   const [members, setMembers] = useState<Member[]>([
     { id: '1', name: 'Kate Ahurika', email: 'kate@brewandbake.com', role: 'owner', status: 'active' },

@@ -22,5 +22,5 @@
     "app/**/*",
     "test/**/*"
   ],
-  "extends": "../node_modules/expo/tsconfig.base.json"
+  "extends": "expo/tsconfig.base"
 }

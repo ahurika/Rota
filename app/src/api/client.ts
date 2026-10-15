@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { secureStorage } from '../lib/secureStore';
 
 export interface ApiErrorResponse {
@@ -28,7 +29,8 @@ export class ApiClient {
   private onAuthFailureCallbacks: Array<() => void> = [];
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+    const defaultUrl = Platform.OS === 'web' ? 'http://localhost:3000' : 'http://172.20.10.2:3000';
+    this.baseUrl = baseUrl || process.env.EXPO_PUBLIC_API_URL || defaultUrl;
   }
 
   public setBaseUrl(url: string) {

@@ -9,6 +9,7 @@ import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { ResultDialog } from '../../src/ui/components/ResultDialog';
 import { fieldMessage, toUxMessage } from '../../src/ui/errorMessages';
 import { scorePassword } from '../../src/ui/passwordStrength';
+import { GoogleSignInModal } from '../../src/features/auth/GoogleSignInModal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +24,7 @@ export default function RegisterScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   const strength = scorePassword(password, email);
   const emailError =
@@ -56,27 +58,6 @@ export default function RegisterScreen() {
       setServerError(`${ux.title}. ${ux.message}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
-
-  const handleGoogleRegister = async () => {
-    try {
-      setIsGoogleSubmitting(true);
-      setServerError(null);
-      const res = await apiClient.post<any>('/v1/auth/google', {
-        idToken: `test_google_token_${Date.now()}`,
-      });
-      const access = res.accessToken || res.tokens?.accessToken;
-      const refresh = res.refreshToken || res.tokens?.refreshToken;
-      if (access) await secureStorage.setAccessToken(access);
-      if (refresh) await secureStorage.setRefreshToken(refresh);
-      setIsSuccessDialogOpen(true);
-    } catch (err: any) {
-      setServerError('Google sign up failed. Please try again.');
-    } finally {
-      setIsGoogleSubmitting(false);
     }
   };
 
@@ -156,7 +137,7 @@ export default function RegisterScreen() {
           mode="contained"
           onPress={handleRegister}
           loading={isSubmitting}
-          disabled={isSubmitting || isGoogleSubmitting}
+          disabled={isSubmitting}
           contentStyle={styles.buttonContent}
           style={styles.submitButton}
         >
@@ -166,9 +147,8 @@ export default function RegisterScreen() {
         <Button
           mode="outlined"
           icon="google"
-          onPress={handleGoogleRegister}
-          loading={isGoogleSubmitting}
-          disabled={isSubmitting || isGoogleSubmitting}
+          onPress={() => setIsGoogleModalOpen(true)}
+          disabled={isSubmitting}
           contentStyle={styles.buttonContent}
           style={[styles.googleButton, { borderColor: theme.colors.outline }]}
         >
@@ -184,7 +164,7 @@ export default function RegisterScreen() {
         </Button>
       </ScrollView>
 
-      {/* Success Modal */}
+      {/* Success Modal for Email/Password */}
       <ResultDialog
         visible={isSuccessDialogOpen}
         kind="success"
@@ -195,6 +175,13 @@ export default function RegisterScreen() {
           setIsSuccessDialogOpen(false);
           router.replace('/(tabs)/shifts');
         }}
+      />
+
+      {/* Interactive Google Sign In / Sign Up Dialog */}
+      <GoogleSignInModal
+        visible={isGoogleModalOpen}
+        onDismiss={() => setIsGoogleModalOpen(false)}
+        onSuccess={() => router.replace('/(tabs)/shifts')}
       />
     </View>
   );

@@ -11,6 +11,7 @@ export default defineConfig({
       '@react-native-async-storage/async-storage': path.resolve(__dirname, 'test/mocks/asyncStorage.ts'),
       '@react-native-community/netinfo': path.resolve(__dirname, 'test/mocks/netinfo.ts'),
       'expo-secure-store': path.resolve(__dirname, 'test/mocks/secureStore.ts'),
+      'react-native': path.resolve(__dirname, 'test/mocks/reactNative.ts'),
     },
   },
 });
