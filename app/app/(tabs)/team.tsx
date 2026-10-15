@@ -191,17 +191,19 @@ export default function TeamScreen() {
           </Card.Content>
         </Card>
 
-        {/* Member Roster List */}
+        {/* Member Roster List Header */}
         <View style={styles.rosterHeader}>
           <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
             Team Roster ({members.length})
           </Text>
           <Button
-            mode="text"
-            icon="plus"
+            mode="contained-tonal"
+            icon="account-plus-outline"
             compact
             onPress={handleOpenInvite}
             disabled={isSeatLimitReached}
+            style={styles.inviteButton}
+            labelStyle={{ fontWeight: '700', fontSize: 13 }}
           >
             Invite
           </Button>
@@ -251,7 +253,7 @@ export default function TeamScreen() {
 
                 <View style={styles.memberInfo}>
                   <View style={styles.nameRow}>
-                    <Text variant="titleSmall" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
+                    <Text variant="titleSmall" style={{ color: theme.colors.onSurface, fontWeight: '700' }} numberOfLines={1}>
                       {member.name}
                     </Text>
                     {isInvited && (
@@ -259,53 +261,60 @@ export default function TeamScreen() {
                         compact
                         icon="clock-outline"
                         style={[styles.statusChip, { backgroundColor: theme.colors.errorContainer }]}
-                        textStyle={{ color: theme.colors.onErrorContainer, fontSize: 10, fontWeight: '600' }}
+                        textStyle={{ color: theme.colors.onErrorContainer, fontSize: 10, fontWeight: '700' }}
                       >
                         Invited
                       </Chip>
                     )}
                   </View>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
                     {member.email}
                   </Text>
                 </View>
 
-                <Chip
-                  compact
-                  icon={isOwner ? 'shield-crown' : isManager ? 'shield-account' : 'account'}
-                  style={[
-                    styles.roleChip,
-                    {
-                      backgroundColor: isOwner
-                        ? theme.colors.primaryContainer
+                {/* Trailing Auto-Layout Slot: Role Badge + Action Slot */}
+                <View style={styles.trailingActionsFrame}>
+                  <Chip
+                    compact
+                    icon={isOwner ? 'shield-crown' : isManager ? 'shield-account' : 'account'}
+                    style={[
+                      styles.roleChip,
+                      {
+                        backgroundColor: isOwner
+                          ? theme.colors.primaryContainer
+                          : isManager
+                          ? theme.colors.secondaryContainer
+                          : theme.colors.surfaceVariant,
+                      },
+                    ]}
+                    textStyle={{
+                      fontSize: 11,
+                      fontWeight: '800',
+                      letterSpacing: 0.5,
+                      color: isOwner
+                        ? theme.colors.onPrimaryContainer
                         : isManager
-                        ? theme.colors.secondaryContainer
-                        : theme.colors.surfaceVariant,
-                    },
-                  ]}
-                  textStyle={{
-                    fontSize: 11,
-                    fontWeight: '700',
-                    color: isOwner
-                      ? theme.colors.onPrimaryContainer
-                      : isManager
-                      ? theme.colors.onSecondaryContainer
-                      : theme.colors.onSurfaceVariant,
-                  }}
-                >
-                  {member.role.toUpperCase()}
-                </Chip>
+                        ? theme.colors.onSecondaryContainer
+                        : theme.colors.onSurfaceVariant,
+                    }}
+                  >
+                    {member.role.toUpperCase()}
+                  </Chip>
 
-                {!isOwner && (
-                  <IconButton
-                    icon="account-remove-outline"
-                    size={20}
-                    iconColor={theme.colors.error}
-                    accessibilityLabel={`Remove ${member.name}`}
-                    onPress={() => setMemberToRemove(member)}
-                    style={{ margin: 0 }}
-                  />
-                )}
+                  {/* Fixed 36px action slot keeps all badges aligned */}
+                  <View style={styles.actionIconSlot}>
+                    {!isOwner ? (
+                      <IconButton
+                        icon="account-remove-outline"
+                        size={20}
+                        iconColor={theme.colors.error}
+                        accessibilityLabel={`Remove ${member.name}`}
+                        onPress={() => setMemberToRemove(member)}
+                        style={{ margin: 0 }}
+                      />
+                    ) : null}
+                  </View>
+                </View>
               </Card.Content>
             </Card>
           );
@@ -446,6 +455,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
   },
+  inviteButton: {
+    borderRadius: radii.md,
+  },
   memberCard: {
     marginBottom: spacing.sm,
     borderRadius: radii.lg,
@@ -460,6 +472,7 @@ const styles = StyleSheet.create({
   memberInfo: {
     flex: 1,
     marginLeft: spacing.md,
+    justifyContent: 'center',
   },
   nameRow: {
     flexDirection: 'row',
@@ -470,9 +483,22 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
   },
+  trailingActionsFrame: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
   roleChip: {
-    marginRight: 4,
     borderRadius: radii.sm,
+    minWidth: 84,
+    justifyContent: 'center',
+  },
+  actionIconSlot: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   planInfoBox: {
     padding: spacing.md,

@@ -139,46 +139,84 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
         onDismiss={onDismiss}
         style={[styles.dialog, { backgroundColor: theme.colors.elevation.level3 }]}
       >
-        <Dialog.Title style={styles.dialogTitle}>
-          <Text variant="headlineSmall" style={{ fontWeight: '800', color: theme.colors.onSurface }}>
-            Subscription & Seats
-          </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-            Requirement 5: Fair integer-cent proration engine
-          </Text>
-        </Dialog.Title>
+        {/* Auto-Layout Header Frame: Prevents horizontal text collision and adds dismiss button */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerTextGroup}>
+            <Text variant="titleLarge" style={{ fontWeight: '800', color: theme.colors.onSurface }}>
+              Subscription & Seats
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+              Fair integer-cent proration engine (Req. 5)
+            </Text>
+          </View>
+          <IconButton
+            icon="close"
+            size={22}
+            onPress={onDismiss}
+            accessibilityLabel="Close subscription modal"
+            style={styles.closeButton}
+          />
+        </View>
 
         <Dialog.ScrollArea style={styles.scrollArea}>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Current Status Pill */}
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Current Active Plan Status Banner */}
             {sub && (
-              <Surface style={[styles.activeStatusBox, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
+              <Surface
+                style={[
+                  styles.activeStatusBox,
+                  { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outlineVariant },
+                ]}
+                elevation={0}
+              >
                 <View style={styles.statusRow}>
-                  <Text variant="labelLarge" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-                    Active Plan: {sub.plan.toUpperCase()}
+                  <View style={styles.statusLeftGroup}>
+                    <Chip
+                      compact
+                      icon="shield-check"
+                      style={{ backgroundColor: theme.colors.primaryContainer }}
+                      textStyle={{ fontWeight: '800', fontSize: 11, color: theme.colors.onPrimaryContainer }}
+                    >
+                      {sub.plan.toUpperCase()}
+                    </Chip>
+                    <Text variant="labelLarge" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
+                      {sub.seats} Seats Active
+                    </Text>
+                  </View>
+                  <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                    Active Plan
                   </Text>
-                  <Chip compact icon="check" style={{ backgroundColor: theme.colors.primaryContainer }}>
-                    {sub.seats} Seats Active
-                  </Chip>
                 </View>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-                  30-day billing cycle • Started {new Date(sub.period_start).toLocaleDateString()}
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>
+                  30-day billing cycle • Renewal: {new Date(new Date(sub.period_start).getTime() + (sub.period_days || 30) * 86400000).toLocaleDateString()}
                 </Text>
               </Surface>
             )}
 
-            {/* Plan Selection Cards */}
-            <Text variant="titleMedium" style={[styles.sectionHeading, { color: theme.colors.onSurface }]}>
-              Choose Plan
-            </Text>
+            {/* Plan Selection Header */}
+            <View style={styles.sectionHeaderRow}>
+              <Text variant="titleMedium" style={[styles.sectionHeading, { color: theme.colors.onSurface }]}>
+                Choose Plan
+              </Text>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                Integer-cent pricing
+              </Text>
+            </View>
 
+            {/* Plan Selection Auto-Layout Cards */}
             <View style={styles.plansContainer}>
               {PLANS_CONFIG.map((p) => {
                 const isSelected = selectedPlan === p.id;
+                const isCurrent = sub?.plan === p.id;
+
                 return (
                   <TouchableOpacity
                     key={p.id}
                     onPress={() => handlePlanSelect(p.id)}
+                    activeOpacity={0.7}
                     style={[
                       styles.planCard,
                       {
@@ -189,39 +227,67 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                     ]}
                   >
                     <View style={styles.planCardHeader}>
-                      <Text
-                        variant="titleMedium"
-                        style={{
-                          fontWeight: '800',
-                          color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.onSurface,
-                        }}
-                      >
-                        {p.name}
-                      </Text>
-                      <Text
-                        variant="titleMedium"
-                        style={{
-                          fontWeight: '800',
-                          color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.primary,
-                        }}
-                      >
-                        {p.price}
-                      </Text>
-                    </View>
+                      <View style={styles.planTitleCol}>
+                        <View style={styles.planTitleBadgeRow}>
+                          <Text
+                            variant="titleMedium"
+                            style={{
+                              fontWeight: '800',
+                              color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.onSurface,
+                            }}
+                          >
+                            {p.name}
+                          </Text>
+                          {isCurrent && (
+                            <Chip
+                              compact
+                              style={{
+                                height: 22,
+                                backgroundColor: isSelected ? theme.colors.surface : theme.colors.surfaceVariant,
+                              }}
+                              textStyle={{ fontSize: 10, fontWeight: '800' }}
+                            >
+                              Current
+                            </Chip>
+                          )}
+                        </View>
+                        <Text
+                          variant="bodySmall"
+                          style={{
+                            color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant,
+                            marginTop: 4,
+                          }}
+                        >
+                          {p.desc}
+                        </Text>
+                      </View>
 
-                    <Text
-                      variant="bodySmall"
-                      style={{
-                        color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant,
-                        marginTop: 4,
-                      }}
-                    >
-                      {p.desc}
-                    </Text>
+                      <View style={styles.planPriceCol}>
+                        <Text
+                          variant="titleLarge"
+                          style={{
+                            fontWeight: '900',
+                            color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.primary,
+                          }}
+                        >
+                          {p.price}
+                        </Text>
+                        <Text
+                          variant="labelSmall"
+                          style={{
+                            color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant,
+                            marginTop: 2,
+                          }}
+                        >
+                          {p.extraSeatPrice !== 'N/A' ? `${p.extraSeatPrice}` : 'fixed seats'}
+                        </Text>
+                      </View>
+                    </View>
 
                     <View style={styles.planMetaRow}>
                       <Chip
                         compact
+                        icon="account-multiple"
                         style={{
                           backgroundColor: isSelected ? theme.colors.surface : theme.colors.surfaceVariant,
                         }}
@@ -231,6 +297,7 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                       </Chip>
                       <Chip
                         compact
+                        icon="account-arrow-up"
                         style={{
                           backgroundColor: isSelected ? theme.colors.surface : theme.colors.surfaceVariant,
                         }}
@@ -244,14 +311,20 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
               })}
             </View>
 
-            {/* Seat Quantity Stepper */}
-            <Surface style={[styles.seatStepperBox, { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]} elevation={0}>
+            {/* Seat Quantity Stepper Auto-Layout Box */}
+            <Surface
+              style={[
+                styles.seatStepperBox,
+                { backgroundColor: theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant },
+              ]}
+              elevation={0}
+            >
               <View style={styles.stepperHeader}>
-                <View>
+                <View style={styles.stepperInfoCol}>
                   <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
                     Team Seat Allocation
                   </Text>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
                     {isStarter ? 'Fixed at 5 seats for Starter' : `${currentPlanConfig.extraSeatPrice} per extra seat`}
                   </Text>
                 </View>
@@ -263,8 +336,13 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                     mode="contained-tonal"
                     disabled={isStarter || selectedSeats <= 1}
                     onPress={() => handleSeatsChange(-1)}
+                    accessibilityLabel="Decrease seats"
+                    style={styles.stepperBtn}
                   />
-                  <Text variant="titleLarge" style={{ fontWeight: '800', marginHorizontal: 8, color: theme.colors.onSurface }}>
+                  <Text
+                    variant="titleLarge"
+                    style={[styles.stepperValueText, { color: theme.colors.onSurface }]}
+                  >
                     {selectedSeats}
                   </Text>
                   <IconButton
@@ -273,15 +351,22 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                     mode="contained-tonal"
                     disabled={isStarter || selectedSeats >= currentPlanConfig.maxSeats}
                     onPress={() => handleSeatsChange(1)}
+                    accessibilityLabel="Increase seats"
+                    style={styles.stepperBtn}
                   />
                 </View>
               </View>
             </Surface>
 
             {/* Live Proration Breakdown Box (Requirement 5 Math) */}
-            <Text variant="titleMedium" style={[styles.sectionHeading, { color: theme.colors.onSurface }]}>
-              Proration Breakdown
-            </Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text variant="titleMedium" style={[styles.sectionHeading, { color: theme.colors.onSurface }]}>
+                Proration Breakdown
+              </Text>
+              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                Exact cent calculations
+              </Text>
+            </View>
 
             {previewMutation.isPending ? (
               <ActivityIndicator size="small" style={{ marginVertical: 16 }} />
@@ -298,12 +383,20 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
               >
                 {preview.proration.kind === 'scheduled' ? (
                   <View>
-                    <Chip icon="calendar-clock" style={{ alignSelf: 'flex-start', backgroundColor: theme.colors.secondaryContainer }}>
-                      Downgrade Scheduled
-                    </Chip>
-                    <Text variant="bodyMedium" style={{ marginTop: 8, color: theme.colors.onSurface }}>
-                      Downgrades take effect on your next renewal date. You retain current plan features until then with{' '}
-                      <Text style={{ fontWeight: '800' }}>$0.00 charged today</Text>.
+                    <View style={styles.scheduledBannerRow}>
+                      <Chip
+                        icon="calendar-clock"
+                        style={{ backgroundColor: theme.colors.secondaryContainer }}
+                        textStyle={{ fontWeight: '700', color: theme.colors.onSecondaryContainer }}
+                      >
+                        Downgrade Scheduled
+                      </Chip>
+                      <Text variant="labelLarge" style={{ fontWeight: '800', color: theme.colors.onSurface }}>
+                        $0.00 today
+                      </Text>
+                    </View>
+                    <Text variant="bodySmall" style={{ marginTop: 8, color: theme.colors.onSurfaceVariant }}>
+                      Downgrades take effect on your next billing renewal. You keep full access to current seats until then.
                     </Text>
                   </View>
                 ) : (
@@ -326,13 +419,18 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                       </Text>
                     </View>
 
-                    <Divider style={{ marginVertical: 8 }} />
+                    <Divider style={{ marginVertical: 10 }} />
 
                     <View style={styles.calcRow}>
-                      <Text variant="titleMedium" style={{ fontWeight: '800', color: theme.colors.onSurface }}>
-                        Due Today:
-                      </Text>
-                      <Text variant="headlineSmall" style={{ fontWeight: '800', color: theme.colors.primary }}>
+                      <View>
+                        <Text variant="titleMedium" style={{ fontWeight: '800', color: theme.colors.onSurface }}>
+                          Due Today:
+                        </Text>
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                          Immediate prorated charge
+                        </Text>
+                      </View>
+                      <Text variant="headlineSmall" style={{ fontWeight: '900', color: theme.colors.primary }}>
                         {formatCents(preview.proration.chargeCents)}
                       </Text>
                     </View>
@@ -342,7 +440,11 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
             ) : null}
 
             {/* Requirement 5 Ifeanyi Scenario Explanation */}
-            <TouchableOpacity onPress={() => setShowScenario(!showScenario)} style={styles.scenarioToggle}>
+            <TouchableOpacity
+              onPress={() => setShowScenario(!showScenario)}
+              style={styles.scenarioToggle}
+              activeOpacity={0.7}
+            >
               <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 {showScenario ? 'Hide Proration Scenario' : 'View Requirement 5 Proration Scenario (Ifeanyi)'}
               </Text>
@@ -364,7 +466,8 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
           </ScrollView>
         </Dialog.ScrollArea>
 
-        <Dialog.Actions>
+        {/* Dialog Action Buttons in Fixed Auto-Layout Footer */}
+        <Dialog.Actions style={styles.dialogActions}>
           <Button onPress={onDismiss} disabled={changeMutation.isPending}>
             Cancel
           </Button>
@@ -373,7 +476,8 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
             loading={changeMutation.isPending}
             disabled={changeMutation.isPending || previewMutation.isPending}
             onPress={handleApplyChange}
-            style={{ borderRadius: radii.full, paddingHorizontal: 12 }}
+            style={styles.confirmButton}
+            labelStyle={{ fontWeight: '700' }}
           >
             {preview?.proration.kind === 'scheduled'
               ? 'Schedule Downgrade'
@@ -388,21 +492,42 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
 const styles = StyleSheet.create({
   dialog: {
     borderRadius: radii.xl,
-    maxHeight: '90%',
+    maxHeight: '88%',
+    maxWidth: 580,
+    width: '94%',
+    alignSelf: 'center',
+    overflow: 'hidden',
   },
-  dialogTitle: {
-    paddingBottom: 4,
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  headerTextGroup: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  closeButton: {
+    margin: 0,
+    marginLeft: spacing.sm,
   },
   scrollArea: {
     paddingHorizontal: 0,
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xxl + 8, // Ensures clear space so bottom content is never clipped by actions
   },
   activeStatusBox: {
     padding: spacing.md,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
     marginBottom: spacing.md,
   },
   statusRow: {
@@ -410,10 +535,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  sectionHeading: {
-    fontWeight: '800',
+  statusLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  sectionHeading: {
+    fontWeight: '800',
   },
   plansContainer: {
     gap: spacing.sm,
@@ -426,7 +561,19 @@ const styles = StyleSheet.create({
   planCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  planTitleCol: {
+    flex: 1,
+    paddingRight: spacing.sm,
+  },
+  planTitleBadgeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  planPriceCol: {
+    alignItems: 'flex-end',
   },
   planMetaRow: {
     flexDirection: 'row',
@@ -444,9 +591,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  stepperInfoCol: {
+    flex: 1,
+    paddingRight: spacing.sm,
+  },
   stepperControls: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  stepperBtn: {
+    margin: 0,
+  },
+  stepperValueText: {
+    fontWeight: '800',
+    minWidth: 32,
+    textAlign: 'center',
+    marginHorizontal: 4,
   },
   prorationCard: {
     padding: spacing.md,
@@ -455,6 +615,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
+  scheduledBannerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   calcRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -462,12 +627,22 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   scenarioToggle: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
   },
   scenarioCard: {
     padding: spacing.md,
     borderRadius: radii.md,
     marginTop: spacing.xs,
+  },
+  dialogActions: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(150, 150, 150, 0.2)',
+  },
+  confirmButton: {
+    borderRadius: radii.full,
+    paddingHorizontal: 8,
   },
 });
