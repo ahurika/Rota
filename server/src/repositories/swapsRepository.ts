@@ -73,4 +73,38 @@ export const swapsRepository = {
     const res = await pool.query<SwapRequestRow>(query, values);
     return res.rows[0] ?? null;
   },
+
+  async listSwaps(
+    teamId: string,
+    status?: 'pending' | 'approved' | 'rejected' | 'all'
+  ): Promise<Array<SwapRequestRow & {
+    shift_label: string;
+    shift_starts_at: Date;
+    shift_ends_at: Date;
+    shift_assignee_id: string | null;
+  }>> {
+    const pool = await dbForTeam(teamId);
+    let query = `
+      SELECT 
+        sr.*,
+        s.label AS shift_label,
+        s.starts_at AS shift_starts_at,
+        s.ends_at AS shift_ends_at,
+        s.assignee_id AS shift_assignee_id
+      FROM swap_requests sr
+      JOIN shifts s ON sr.shift_id = s.id
+      WHERE sr.team_id = $1
+    `;
+    const values: any[] = [teamId];
+
+    if (status && status !== 'all') {
+      query += ` AND sr.status = $2`;
+      values.push(status);
+    }
+
+    query += ` ORDER BY sr.created_at DESC`;
+
+    const res = await pool.query(query, values);
+    return res.rows;
+  },
 };

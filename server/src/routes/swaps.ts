@@ -5,7 +5,11 @@ import { loadMembership, requirePermission } from '../middleware/rbac.js';
 import { swapsRepository } from '../repositories/swapsRepository.js';
 import { shiftsRepository } from '../repositories/shiftsRepository.js';
 import { activityRepository } from '../repositories/activityRepository.js';
+import { membershipsRepository } from '../repositories/membershipsRepository.js';
+import { usersRepository } from '../repositories/usersRepository.js';
+import { notificationService } from '../services/notifications/notificationService.js';
 import { dbForTeam } from '../db/shards.js';
+import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 import { TeamVariables } from './teams.js';
 
@@ -24,7 +28,61 @@ const decideSwapSchema = z
   })
   .strict();
 
-// 1. POST /v1/teams/:teamId/swaps (Request a shift swap)
+const listSwapsQuerySchema = z.object({
+  status: z.enum(['pending', 'approved', 'rejected', 'all']).optional(),
+});
+
+// 1. GET /v1/teams/:teamId/swaps (List team swaps)
+swapsRouter.get(
+  '/',
+  requireAuth(),
+  loadMembership(),
+  requirePermission('swap.request'),
+  async (c) => {
+    const teamId = c.req.param('teamId')!;
+    const statusParam = c.req.query('status') as 'pending' | 'approved' | 'rejected' | 'all' | undefined;
+    const parsedQuery = listSwapsQuerySchema.safeParse({ status: statusParam });
+    const status = parsedQuery.success ? parsedQuery.data.status : undefined;
+
+    const rows = await swapsRepository.listSwaps(teamId, status);
+
+    // Collect user IDs to batch resolve emails
+    const userIds = new Set<string>();
+    for (const r of rows) {
+      if (r.requester_id) userIds.add(r.requester_id);
+      if (r.target_id) userIds.add(r.target_id);
+      if (r.decided_by) userIds.add(r.decided_by);
+    }
+
+    const userMap = await usersRepository.findByIds(Array.from(userIds));
+
+    const swaps = rows.map((r) => {
+      const requester = userMap.get(r.requester_id);
+      const target = r.target_id ? userMap.get(r.target_id) : null;
+      return {
+        id: r.id,
+        team_id: r.team_id,
+        shift_id: r.shift_id,
+        requester_id: r.requester_id,
+        requester_email: requester?.email ?? 'Staff Member',
+        target_id: r.target_id,
+        target_email: target?.email ?? null,
+        status: r.status,
+        decided_by: r.decided_by,
+        decided_at: r.decided_at,
+        created_at: r.created_at,
+        shift_label: r.shift_label,
+        shift_starts_at: r.shift_starts_at,
+        shift_ends_at: r.shift_ends_at,
+        shift_assignee_id: r.shift_assignee_id,
+      };
+    });
+
+    return c.json({ swaps }, 200);
+  }
+);
+
+// 2. POST /v1/teams/:teamId/swaps (Request a shift swap)
 swapsRouter.post(
   '/',
   requireAuth(),
@@ -79,6 +137,37 @@ swapsRouter.post(
       );
 
       await client.query('COMMIT');
+
+      // Dispatch push notification to managers/owners & target colleague
+      try {
+        const recipients: string[] = [];
+        if (parsed.data.targetId && parsed.data.targetId !== userId) {
+          recipients.push(parsed.data.targetId);
+        }
+        const members = await membershipsRepository.listByTeam(teamId);
+        const managers = members.filter(
+          (m) => (m.role === 'manager' || m.role === 'owner') && m.user_id !== userId
+        );
+        for (const m of managers) {
+          if (!recipients.includes(m.user_id)) recipients.push(m.user_id);
+        }
+
+        if (recipients.length > 0) {
+          notificationService
+            .processNotification({
+              type: 'swaps',
+              teamId,
+              recipients,
+              title: 'Shift Swap Requested',
+              body: `A shift swap was requested for '${shift.label}'.`,
+              data: { swapId: swap.id, shiftId: shift.id },
+            })
+            .catch((err) => logger.warn({ err }, 'Failed to dispatch swap request notification'));
+        }
+      } catch (notifErr) {
+        logger.warn({ notifErr }, 'Error queuing swap request notification');
+      }
+
       return c.json({ swap }, 201);
     } catch (err: any) {
       await client.query('ROLLBACK').catch(() => {});
@@ -92,7 +181,7 @@ swapsRouter.post(
   }
 );
 
-// 2. POST /v1/teams/:teamId/swaps/:swapId/decision (Approve or reject a swap)
+// 3. POST /v1/teams/:teamId/swaps/:swapId/decision (Approve or reject a swap)
 swapsRouter.post(
   '/:swapId/decision',
   requireAuth(),
@@ -166,6 +255,34 @@ swapsRouter.post(
       );
 
       await client.query('COMMIT');
+
+      // Dispatch push notification to requester (and target colleague)
+      try {
+        const recipients: string[] = [existingSwap.requester_id];
+        if (
+          existingSwap.target_id &&
+          existingSwap.target_id !== userId &&
+          !recipients.includes(existingSwap.target_id)
+        ) {
+          recipients.push(existingSwap.target_id);
+        }
+        const isApproved = parsed.data.status === 'approved';
+        notificationService
+          .processNotification({
+            type: 'swaps',
+            teamId,
+            recipients,
+            title: isApproved ? 'Shift Swap Approved' : 'Shift Swap Rejected',
+            body: isApproved
+              ? 'Your shift swap request was approved by the manager.'
+              : 'Your shift swap request was rejected.',
+            data: { swapId, status: parsed.data.status },
+          })
+          .catch((err) => logger.warn({ err }, 'Failed to dispatch swap decision notification'));
+      } catch (notifErr) {
+        logger.warn({ notifErr }, 'Error queuing swap decision notification');
+      }
+
       return c.json({ swap: updatedSwap }, 200);
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
