@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card, Text, Chip, Button, ProgressBar, useTheme, Surface } from 'react-native-paper';
 import { useBilling } from './useBilling';
+import { AnimatedPressable } from '../../ui/components/AnimatedPressable';
 import { spacing, radii } from '../../ui/tokens';
 
 interface SubscriptionCardProps {
@@ -51,15 +52,17 @@ export function SubscriptionCard({ teamId, onManagePress, compact = false }: Sub
               {meta.price} • {currentSeats} seats
             </Text>
           </View>
-          <Button
-            mode="text"
-            compact
-            icon="cog-outline"
-            onPress={onManagePress}
-            labelStyle={{ fontSize: 12, fontWeight: '700' }}
-          >
-            Manage
-          </Button>
+          <AnimatedPressable scaleTo={0.92} onPress={onManagePress}>
+            <Button
+              mode="text"
+              compact
+              icon="cog-outline"
+              onPress={onManagePress}
+              labelStyle={{ fontSize: 12, fontWeight: '700' }}
+            >
+              Manage
+            </Button>
+          </AnimatedPressable>
         </View>
         {pendingPlan && (
           <Text variant="labelSmall" style={{ color: theme.colors.error, marginTop: 4 }}>
@@ -71,17 +74,18 @@ export function SubscriptionCard({ teamId, onManagePress, compact = false }: Sub
   }
 
   return (
-    <Card
-      mode="elevated"
-      style={[
-        styles.fullCard,
-        {
-          backgroundColor: theme.colors.elevation.level1,
-          borderColor: theme.colors.outlineVariant,
-        },
-      ]}
-      onPress={onManagePress}
-    >
+    <AnimatedPressable scaleTo={0.98} onPress={onManagePress}>
+      <Card
+        mode="elevated"
+        style={[
+          styles.fullCard,
+          {
+            backgroundColor: theme.colors.elevation.level1,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+        onPress={onManagePress}
+      >
       <Card.Content>
         <View style={styles.cardHeader}>
           <View>
@@ -132,7 +136,8 @@ export function SubscriptionCard({ teamId, onManagePress, compact = false }: Sub
         </View>
       </Card.Content>
     </Card>
-  );
+  </AnimatedPressable>
+);
 }
 
 const styles = StyleSheet.create({

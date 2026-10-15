@@ -16,6 +16,7 @@ import {
 } from 'react-native-paper';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useShifts, useRequestSwap, Shift } from './useShifts';
+import { AnimatedPressable } from '../../ui/components/AnimatedPressable';
 import { spacing, radii } from '../../ui/tokens';
 
 interface ShiftsViewProps {
@@ -157,19 +158,19 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
           });
 
           return (
-            <Card
-              key={shift.id}
-              mode="elevated"
-              style={[
-                styles.shiftCard,
-                {
-                  backgroundColor: theme.colors.elevation.level1,
-                  borderColor: theme.colors.outlineVariant,
-                },
-              ]}
-              testID={`shift-card-${shift.id}`}
-            >
-              <Card.Content style={styles.cardContent}>
+            <AnimatedPressable key={shift.id} scaleTo={0.98}>
+              <Card
+                mode="elevated"
+                style={[
+                  styles.shiftCard,
+                  {
+                    backgroundColor: theme.colors.elevation.level1,
+                    borderColor: theme.colors.outlineVariant,
+                  },
+                ]}
+                testID={`shift-card-${shift.id}`}
+              >
+                <Card.Content style={styles.cardContent}>
                 <View style={styles.cardHeaderRow}>
                   <View style={{ flex: 1 }}>
                     <Text variant="titleMedium" style={[styles.shiftLabel, { color: theme.colors.onSurface }]}>
@@ -192,31 +193,34 @@ export function ShiftsView({ teamId }: ShiftsViewProps) {
                     )}
                   </View>
 
-                  <Button
-                    mode={isPendingSwap ? 'outlined' : 'contained-tonal'}
-                    compact
-                    loading={swapMutation.isPending && swapMutation.variables?.shiftId === shift.id}
-                    disabled={isPendingSwap || isOffline}
-                    onPress={() => handleRequestSwap(shift)}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      isPendingSwap
-                        ? 'Swap request pending'
-                        : isOffline
-                        ? 'Swap disabled offline'
-                        : `Request swap for ${shift.label}`
-                    }
-                    testID={`swap-button-${shift.id}`}
-                    style={styles.swapBtn}
-                    labelStyle={{ fontSize: 12, fontWeight: '600' }}
-                  >
-                    {isPendingSwap ? 'Pending' : isOffline ? 'Offline' : 'Swap'}
-                  </Button>
+                  <AnimatedPressable scaleTo={0.93} disabled={isPendingSwap || isOffline}>
+                    <Button
+                      mode={isPendingSwap ? 'outlined' : 'contained-tonal'}
+                      compact
+                      loading={swapMutation.isPending && swapMutation.variables?.shiftId === shift.id}
+                      disabled={isPendingSwap || isOffline}
+                      onPress={() => handleRequestSwap(shift)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        isPendingSwap
+                          ? 'Swap request pending'
+                          : isOffline
+                          ? 'Swap disabled offline'
+                          : `Request swap for ${shift.label}`
+                      }
+                      testID={`swap-button-${shift.id}`}
+                      style={styles.swapBtn}
+                      labelStyle={{ fontSize: 12, fontWeight: '600' }}
+                    >
+                      {isPendingSwap ? 'Pending' : isOffline ? 'Offline' : 'Swap'}
+                    </Button>
+                  </AnimatedPressable>
                 </View>
               </Card.Content>
             </Card>
-          );
-        })}
+          </AnimatedPressable>
+        );
+      })}
       </ScrollView>
     </View>
   );

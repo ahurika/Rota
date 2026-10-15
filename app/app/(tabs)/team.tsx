@@ -24,6 +24,7 @@ import { apiClient } from '../../src/api/client';
 import { useActiveTeam } from '../../src/features/teams/useActiveTeam';
 import { useBilling } from '../../src/features/billing/useBilling';
 import { SubscriptionManagerModal } from '../../src/features/billing/SubscriptionManagerModal';
+import { AnimatedPressable } from '../../src/ui/components/AnimatedPressable';
 import { spacing, radii } from '../../src/ui/tokens';
 
 type Member = {
@@ -196,17 +197,19 @@ export default function TeamScreen() {
           <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
             Team Roster ({members.length})
           </Text>
-          <Button
-            mode="contained-tonal"
-            icon="account-plus-outline"
-            compact
-            onPress={handleOpenInvite}
-            disabled={isSeatLimitReached}
-            style={styles.inviteButton}
-            labelStyle={{ fontWeight: '700', fontSize: 13 }}
-          >
-            Invite
-          </Button>
+          <AnimatedPressable scaleTo={0.94} disabled={isSeatLimitReached}>
+            <Button
+              mode="contained-tonal"
+              icon="account-plus-outline"
+              compact
+              onPress={handleOpenInvite}
+              disabled={isSeatLimitReached}
+              style={styles.inviteButton}
+              labelStyle={{ fontWeight: '700', fontSize: 13 }}
+            >
+              Invite
+            </Button>
+          </AnimatedPressable>
         </View>
 
         {members.map((member) => {
@@ -215,18 +218,18 @@ export default function TeamScreen() {
           const isInvited = member.status === 'invited';
 
           return (
-            <Card
-              key={member.id}
-              mode="elevated"
-              style={[
-                styles.memberCard,
-                {
-                  backgroundColor: theme.colors.elevation.level1,
-                  borderColor: theme.colors.outlineVariant,
-                },
-              ]}
-            >
-              <Card.Content style={styles.memberCardContent}>
+            <AnimatedPressable key={member.id} scaleTo={0.98}>
+              <Card
+                mode="elevated"
+                style={[
+                  styles.memberCard,
+                  {
+                    backgroundColor: theme.colors.elevation.level1,
+                    borderColor: theme.colors.outlineVariant,
+                  },
+                ]}
+              >
+                <Card.Content style={styles.memberCardContent}>
                 <Avatar.Text
                   size={42}
                   label={member.name
@@ -317,8 +320,9 @@ export default function TeamScreen() {
                 </View>
               </Card.Content>
             </Card>
-          );
-        })}
+          </AnimatedPressable>
+        );
+      })}
       </ScrollView>
 
       {/* 1. Interactive Invite Colleague Dialog */}

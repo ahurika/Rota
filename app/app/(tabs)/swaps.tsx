@@ -7,6 +7,7 @@ import { useSnackbar } from '../../src/ui/components/SnackbarProvider';
 import { useActiveTeam } from '../../src/features/teams/useActiveTeam';
 import { useSwaps, useDecideSwap, SwapItem } from '../../src/features/swaps/useSwaps';
 import { extraColors } from '../../src/ui/theme';
+import { AnimatedPressable } from '../../src/ui/components/AnimatedPressable';
 import { spacing, radii } from '../../src/ui/tokens';
 
 export default function SwapsScreen() {
@@ -93,18 +94,18 @@ export default function SwapsScreen() {
           </View>
         ) : (
           currentList.map((item) => (
-            <Card
-              key={item.id}
-              mode="elevated"
-              style={[
-                styles.card,
-                {
-                  backgroundColor: theme.colors.elevation.level1,
-                  borderColor: theme.colors.outlineVariant,
-                },
-              ]}
-            >
-              <Card.Content>
+            <AnimatedPressable key={item.id} scaleTo={0.98}>
+              <Card
+                mode="elevated"
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: theme.colors.elevation.level1,
+                    borderColor: theme.colors.outlineVariant,
+                  },
+                ]}
+              >
+                <Card.Content>
                 <View style={styles.cardHeader}>
                   <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '800' }}>
                     {formatShiftTime(item.shift_starts_at, item.shift_ends_at)}
@@ -157,27 +158,32 @@ export default function SwapsScreen() {
 
               {tab === 'pending' && (
                 <Card.Actions style={styles.cardActions}>
-                  <Button
-                    mode="outlined"
-                    textColor={theme.colors.error}
-                    style={{ borderColor: theme.colors.error, borderRadius: radii.full }}
-                    disabled={decideMutation.isPending}
-                    onPress={() => setSelectedSwap({ id: item.id, action: 'rejected' })}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    mode="contained"
-                    style={{ borderRadius: radii.full }}
-                    disabled={decideMutation.isPending}
-                    onPress={() => setSelectedSwap({ id: item.id, action: 'approved' })}
-                  >
-                    Approve
-                  </Button>
+                  <AnimatedPressable scaleTo={0.92} disabled={decideMutation.isPending}>
+                    <Button
+                      mode="outlined"
+                      textColor={theme.colors.error}
+                      style={{ borderColor: theme.colors.error, borderRadius: radii.full }}
+                      disabled={decideMutation.isPending}
+                      onPress={() => setSelectedSwap({ id: item.id, action: 'rejected' })}
+                    >
+                      Reject
+                    </Button>
+                  </AnimatedPressable>
+                  <AnimatedPressable scaleTo={0.92} disabled={decideMutation.isPending}>
+                    <Button
+                      mode="contained"
+                      style={{ borderRadius: radii.full }}
+                      disabled={decideMutation.isPending}
+                      onPress={() => setSelectedSwap({ id: item.id, action: 'approved' })}
+                    >
+                      Approve
+                    </Button>
+                  </AnimatedPressable>
                 </Card.Actions>
               )}
             </Card>
-          ))
+          </AnimatedPressable>
+        ))
         )}
       </ScrollView>
 

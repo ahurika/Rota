@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import {
   Portal,
   Dialog,
@@ -14,6 +14,7 @@ import {
 } from 'react-native-paper';
 import { useBilling, useProrationPreview, useChangeSubscription, PlanId, ProrationBreakdown } from './useBilling';
 import { useSnackbar } from '../../ui/components/SnackbarProvider';
+import { AnimatedPressable } from '../../ui/components/AnimatedPressable';
 import { spacing, radii } from '../../ui/tokens';
 
 interface SubscriptionManagerModalProps {
@@ -67,6 +68,11 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
   const [selectedSeats, setSelectedSeats] = useState<number>(5);
   const [showScenario, setShowScenario] = useState(false);
 
+  // Micro-interaction animation refs
+  const priceScaleAnim = useRef(new Animated.Value(1)).current;
+  const seatsScaleAnim = useRef(new Animated.Value(1)).current;
+  const scenarioAnim = useRef(new Animated.Value(0)).current;
+
   // Initialize selected values from active subscription
   useEffect(() => {
     if (sub) {
@@ -81,6 +87,16 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
       previewMutation.mutate({ plan: selectedPlan, seats: selectedSeats });
     }
   }, [selectedPlan, selectedSeats, visible]);
+
+  // Animate price badge when charge calculation updates
+  useEffect(() => {
+    if (previewMutation.data?.proration?.chargeCents !== undefined) {
+      Animated.sequence([
+        Animated.timing(priceScaleAnim, { toValue: 1.15, duration: 110, useNativeDriver: true }),
+        Animated.spring(priceScaleAnim, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [previewMutation.data?.proration?.chargeCents]);
 
   const currentPlanConfig = PLANS_CONFIG.find((p) => p.id === selectedPlan) || PLANS_CONFIG[0];
   const isStarter = selectedPlan === 'starter';
@@ -104,7 +120,21 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
     const next = selectedSeats + delta;
     if (next >= 1 && next <= currentPlanConfig.maxSeats) {
       setSelectedSeats(next);
+      Animated.sequence([
+        Animated.timing(seatsScaleAnim, { toValue: 1.25, duration: 80, useNativeDriver: true }),
+        Animated.spring(seatsScaleAnim, { toValue: 1, friction: 6, tension: 140, useNativeDriver: true }),
+      ]).start();
     }
+  };
+
+  const handleToggleScenario = () => {
+    const next = !showScenario;
+    setShowScenario(next);
+    Animated.timing(scenarioAnim, {
+      toValue: next ? 1 : 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handleApplyChange = async () => {
@@ -206,17 +236,17 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
               </Text>
             </View>
 
-            {/* Plan Selection Auto-Layout Cards */}
+            {/* Plan Selection Auto-Layout Cards with Spring Micro-Interactions */}
             <View style={styles.plansContainer}>
               {PLANS_CONFIG.map((p) => {
                 const isSelected = selectedPlan === p.id;
                 const isCurrent = sub?.plan === p.id;
 
                 return (
-                  <TouchableOpacity
+                  <AnimatedPressable
                     key={p.id}
+                    scaleTo={0.98}
                     onPress={() => handlePlanSelect(p.id)}
-                    activeOpacity={0.7}
                     style={[
                       styles.planCard,
                       {
@@ -306,7 +336,7 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                         Max {p.maxSeats} seats
                       </Chip>
                     </View>
-                  </TouchableOpacity>
+                  </AnimatedPressable>
                 );
               })}
             </View>
@@ -339,12 +369,14 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                     accessibilityLabel="Decrease seats"
                     style={styles.stepperBtn}
                   />
-                  <Text
-                    variant="titleLarge"
-                    style={[styles.stepperValueText, { color: theme.colors.onSurface }]}
-                  >
-                    {selectedSeats}
-                  </Text>
+                  <Animated.View style={{ transform: [{ scale: seatsScaleAnim }] }}>
+                    <Text
+                      variant="titleLarge"
+                      style={[styles.stepperValueText, { color: theme.colors.onSurface }]}
+                    >
+                      {selectedSeats}
+                    </Text>
+                  </Animated.View>
                   <IconButton
                     icon="plus"
                     size={20}
@@ -430,18 +462,20 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
                           Immediate prorated charge
                         </Text>
                       </View>
-                      <Text variant="headlineSmall" style={{ fontWeight: '900', color: theme.colors.primary }}>
-                        {formatCents(preview.proration.chargeCents)}
-                      </Text>
+                      <Animated.View style={{ transform: [{ scale: priceScaleAnim }] }}>
+                        <Text variant="headlineSmall" style={{ fontWeight: '900', color: theme.colors.primary }}>
+                          {formatCents(preview.proration.chargeCents)}
+                        </Text>
+                      </Animated.View>
                     </View>
                   </View>
                 )}
               </Surface>
             ) : null}
 
-            {/* Requirement 5 Ifeanyi Scenario Explanation */}
+            {/* Requirement 5 Ifeanyi Scenario Explanation with Motion Accordion */}
             <TouchableOpacity
-              onPress={() => setShowScenario(!showScenario)}
+              onPress={handleToggleScenario}
               style={styles.scenarioToggle}
               activeOpacity={0.7}
             >
@@ -451,17 +485,31 @@ export function SubscriptionManagerModal({ visible, teamId, onDismiss }: Subscri
             </TouchableOpacity>
 
             {showScenario && (
-              <Surface style={[styles.scenarioCard, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
-                <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-                  Scenario: Café Upgrade on Day 10
-                </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-                  Ifeanyi runs a café on Starter ($20). On the 11th of a 30-day period (20 days left), he hires 4 staff and upgrades to Team ($50):{'\n'}
-                  • Credit for unused Starter: 2000 × 20 ÷ 30 = 1333 cents ($13.33){'\n'}
-                  • Cost of Team remaining: 5000 × 20 ÷ 30 = 3333 cents ($33.33){'\n'}
-                  • Charge today: 3333 - 1333 = <Text style={{ fontWeight: '700' }}>2000 cents ($20.00)</Text>.
-                </Text>
-              </Surface>
+              <Animated.View
+                style={{
+                  opacity: scenarioAnim,
+                  transform: [
+                    {
+                      translateY: scenarioAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-8, 0],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <Surface style={[styles.scenarioCard, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
+                  <Text variant="titleSmall" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
+                    Scenario: Café Upgrade on Day 10
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+                    Ifeanyi runs a café on Starter ($20). On the 11th of a 30-day period (20 days left), he hires 4 staff and upgrades to Team ($50):{'\n'}
+                    • Credit for unused Starter: 2000 × 20 ÷ 30 = 1333 cents ($13.33){'\n'}
+                    • Cost of Team remaining: 5000 × 20 ÷ 30 = 3333 cents ($33.33){'\n'}
+                    • Charge today: 3333 - 1333 = <Text style={{ fontWeight: '700' }}>2000 cents ($20.00)</Text>.
+                  </Text>
+                </Surface>
+              </Animated.View>
             )}
           </ScrollView>
         </Dialog.ScrollArea>

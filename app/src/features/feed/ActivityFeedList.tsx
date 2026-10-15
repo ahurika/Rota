@@ -15,6 +15,7 @@ import {
 } from 'react-native-paper';
 import { FlashList } from '@shopify/flash-list';
 import { useActivityFeed, ActivityEvent } from './useActivityFeed';
+import { AnimatedPressable } from '../../ui/components/AnimatedPressable';
 import { spacing, radii } from '../../ui/tokens';
 
 interface ActivityFeedListProps {
@@ -173,18 +174,19 @@ export function ActivityFeedList({ teamId }: ActivityFeedListProps) {
       : item.payload?.note || `Event on team`;
 
     return (
-      <Card
-        style={[
-          styles.eventCard,
-          {
-            backgroundColor: theme.colors.elevation.level1,
-            borderColor: theme.colors.outlineVariant,
-          },
-        ]}
-        mode="elevated"
-        testID={`activity-item-${item.id}`}
-      >
-        <Card.Content style={styles.cardContent}>
+      <AnimatedPressable scaleTo={0.98}>
+        <Card
+          style={[
+            styles.eventCard,
+            {
+              backgroundColor: theme.colors.elevation.level1,
+              borderColor: theme.colors.outlineVariant,
+            },
+          ]}
+          mode="elevated"
+          testID={`activity-item-${item.id}`}
+        >
+          <Card.Content style={styles.cardContent}>
           <View style={styles.cardRow}>
             <Avatar.Icon
               size={40}
@@ -212,8 +214,9 @@ export function ActivityFeedList({ teamId }: ActivityFeedListProps) {
           </View>
         </Card.Content>
       </Card>
-    );
-  };
+    </AnimatedPressable>
+  );
+};
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
