@@ -8,6 +8,7 @@ import { useUiStore } from '../../src/state/uiStore';
 import { PasswordField } from '../../src/ui/components/PasswordField';
 import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { toUxMessage } from '../../src/ui/errorMessages';
+import { GoogleSignInModal } from '../../src/features/auth/GoogleSignInModal';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function LoginScreen() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   const handleLogin = async () => {
     setServerError(null);
@@ -62,33 +63,6 @@ export default function LoginScreen() {
       setServerError(`${ux.title}. ${ux.message}`);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setIsGoogleSubmitting(true);
-      setServerError(null);
-      const res = await apiClient.post<any>('/v1/auth/google', {
-        idToken: `test_google_token_${Date.now()}`,
-      });
-      const access = res.accessToken || res.tokens?.accessToken;
-      const refresh = res.refreshToken || res.tokens?.refreshToken;
-      if (access) await secureStorage.setAccessToken(access);
-      if (refresh) await secureStorage.setRefreshToken(refresh);
-
-      try {
-        const teamsRes = await apiClient.get<{ teams: Array<{ id: string; name: string }> }>('/v1/teams');
-        if (teamsRes.teams && teamsRes.teams.length > 0) {
-          useUiStore.getState().setCurrentTeamId(teamsRes.teams[0].id);
-        }
-      } catch {}
-
-      router.replace('/(tabs)/shifts');
-    } catch (err: any) {
-      setServerError('Google sign in failed. Please try again.');
-    } finally {
-      setIsGoogleSubmitting(false);
     }
   };
 
@@ -154,7 +128,7 @@ export default function LoginScreen() {
           mode="contained"
           onPress={handleLogin}
           loading={isSubmitting}
-          disabled={isSubmitting || isGoogleSubmitting}
+          disabled={isSubmitting}
           contentStyle={styles.buttonContent}
           style={styles.submitButton}
         >
@@ -165,9 +139,8 @@ export default function LoginScreen() {
         <Button
           mode="outlined"
           icon="google"
-          onPress={handleGoogleLogin}
-          loading={isGoogleSubmitting}
-          disabled={isSubmitting || isGoogleSubmitting}
+          onPress={() => setIsGoogleModalOpen(true)}
+          disabled={isSubmitting}
           contentStyle={styles.buttonContent}
           style={[styles.googleButton, { borderColor: theme.colors.outline }]}
         >
@@ -195,6 +168,13 @@ export default function LoginScreen() {
           Use Demo Account (seed_owner_1)
         </Button>
       </ScrollView>
+
+      {/* Interactive Google Sign In Dialog */}
+      <GoogleSignInModal
+        visible={isGoogleModalOpen}
+        onDismiss={() => setIsGoogleModalOpen(false)}
+        onSuccess={() => router.replace('/(tabs)/shifts')}
+      />
     </View>
   );
 }

@@ -59,8 +59,9 @@ export class BillingService {
     newPlan: PlanId;
     newSeats: number;
     idempotencyKey: string;
+    simulatePayment?: boolean;
   }) {
-    const { teamId, userId, userEmail, newPlan, newSeats, idempotencyKey } = params;
+    const { teamId, userId, userEmail, newPlan, newSeats, idempotencyKey, simulatePayment } = params;
     const planConfig = PLANS[newPlan];
     if (!planConfig) {
       throw new AppError(400, 'INVALID_PLAN', 'Unknown plan specified');
@@ -129,7 +130,72 @@ export class BillingService {
 
       // Direction: Immediate change
       if (proration.chargeCents > 0) {
-        // Creates payment_attempt; changes plan only after verified webhook!
+        if (simulatePayment) {
+          const attempt = await paymentAttemptsRepository.create(
+            teamId,
+            {
+              kind: 'change',
+              amountCents: proration.chargeCents,
+              currency: 'USD',
+              idempotencyKey,
+              status: 'succeeded',
+              requestedPlan: newPlan,
+              requestedSeats: newSeats,
+            },
+            client
+          );
+
+          const providerRef = `sim_${attempt.id}`;
+          await client.query(
+            `UPDATE payment_attempts SET provider_ref = $1 WHERE id = $2`,
+            [providerRef, attempt.id]
+          );
+
+          await ledgerRepository.insertEntry(
+            teamId,
+            {
+              type: 'charge',
+              amountCents: proration.chargeCents,
+              currency: 'USD',
+              plan: newPlan,
+              seats: newSeats,
+              reason: 'subscription_charge',
+              idempotencyKey: `attempt:${attempt.id}`,
+              providerRef,
+            },
+            client
+          );
+
+          const updated = await subscriptionsRepository.updatePlanAndSeats(
+            teamId,
+            newPlan,
+            newSeats,
+            client
+          );
+
+          await activityRepository.createEvent(
+            {
+              teamId,
+              type: 'subscription_charge_succeeded',
+              actorId: userId,
+              entityId: attempt.id,
+              payload: { amountCents: proration.chargeCents, plan: newPlan, seats: newSeats },
+            },
+            client
+          );
+
+          await client.query('COMMIT');
+
+          return {
+            status: 'applied',
+            kind: 'immediate',
+            chargeCents: proration.chargeCents,
+            subscription: updated,
+            simulated: true,
+          };
+        }
+
+        // Live checkout session flow
         const attempt = await paymentAttemptsRepository.create(
           teamId,
           {

@@ -36,6 +36,19 @@ export const usersRepository = {
     return res.rows[0] ?? null;
   },
 
+  async findByIds(ids: string[]): Promise<Map<string, { id: string; email: string }>> {
+    if (!ids || ids.length === 0) return new Map();
+    const res = await primaryPool0.query<{ id: string; email: string }>(
+      `SELECT id, email FROM users WHERE id = ANY($1::uuid[])`,
+      [ids]
+    );
+    const map = new Map<string, { id: string; email: string }>();
+    for (const row of res.rows) {
+      map.set(row.id, row);
+    }
+    return map;
+  },
+
   async bumpTokenVersion(id: string): Promise<number> {
     const res = await primaryPool0.query<{ token_version: number }>(
       `UPDATE users

@@ -4,7 +4,9 @@ import { requireAuth } from '../middleware/auth.js';
 import { loadMembership, requirePermission } from '../middleware/rbac.js';
 import { shiftsRepository } from '../repositories/shiftsRepository.js';
 import { activityRepository } from '../repositories/activityRepository.js';
+import { notificationService } from '../services/notifications/notificationService.js';
 import { dbForTeam } from '../db/shards.js';
+import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 import { TeamVariables } from './teams.js';
 
@@ -101,6 +103,21 @@ shiftsRouter.post(
       );
 
       await client.query('COMMIT');
+
+      // Dispatch push notification to assignee if assigned
+      if (shift.assignee_id && shift.assignee_id !== c.get('userId')) {
+        notificationService
+          .processNotification({
+            type: 'shift_changes',
+            teamId,
+            recipients: [shift.assignee_id],
+            title: 'New Shift Assigned',
+            body: `You were assigned a shift: ${shift.label} on ${new Date(shift.starts_at).toLocaleDateString()}.`,
+            data: { shiftId: shift.id },
+          })
+          .catch((err) => logger.warn({ err }, 'Failed to dispatch shift assigned push notification'));
+      }
+
       return c.json({ shift }, 201);
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
@@ -190,6 +207,20 @@ shiftsRouter.patch(
       );
 
       await client.query('COMMIT');
+
+      if (shift.assignee_id && shift.assignee_id !== c.get('userId')) {
+        notificationService
+          .processNotification({
+            type: 'shift_changes',
+            teamId,
+            recipients: [shift.assignee_id],
+            title: 'Shift Updated',
+            body: `Your shift '${shift.label}' was updated.`,
+            data: { shiftId: shift.id },
+          })
+          .catch((err) => logger.warn({ err }, 'Failed to dispatch shift update push notification'));
+      }
+
       return c.json({ shift }, 200);
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
@@ -216,6 +247,11 @@ shiftsRouter.delete(
     try {
       await client.query('BEGIN');
 
+      const existing = await shiftsRepository.findShift(teamId, shiftId, client);
+      if (!existing) {
+        throw new AppError('NOT_FOUND', 404, 'Shift not found');
+      }
+
       const deleted = await shiftsRepository.deleteShift(teamId, shiftId, client);
       if (!deleted) {
         throw new AppError('NOT_FOUND', 404, 'Shift not found');
@@ -232,6 +268,20 @@ shiftsRouter.delete(
       );
 
       await client.query('COMMIT');
+
+      if (existing.assignee_id && existing.assignee_id !== c.get('userId')) {
+        notificationService
+          .processNotification({
+            type: 'shift_changes',
+            teamId,
+            recipients: [existing.assignee_id],
+            title: 'Shift Cancelled',
+            body: `Your shift '${existing.label}' has been cancelled.`,
+            data: { shiftId },
+          })
+          .catch((err) => logger.warn({ err }, 'Failed to dispatch shift cancellation push notification'));
+      }
+
       return c.json({ success: true }, 200);
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});

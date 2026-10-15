@@ -21,7 +21,9 @@ import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
 import { ResultDialog } from '../../src/ui/components/ResultDialog';
 import { useSnackbar } from '../../src/ui/components/SnackbarProvider';
 import { apiClient } from '../../src/api/client';
-import { useUiStore } from '../../src/state/uiStore';
+import { useActiveTeam } from '../../src/features/teams/useActiveTeam';
+import { useBilling } from '../../src/features/billing/useBilling';
+import { SubscriptionManagerModal } from '../../src/features/billing/SubscriptionManagerModal';
 import { spacing, radii } from '../../src/ui/tokens';
 
 type Member = {
@@ -35,7 +37,8 @@ type Member = {
 export default function TeamScreen() {
   const theme = useTheme();
   const snackbar = useSnackbar();
-  const currentTeamId = useUiStore((s) => s.currentTeamId) || '859a9351-a67e-4a0b-9ab4-c25ac5ef9d95';
+  const { currentTeamId, activeTeam } = useActiveTeam();
+  const { data: sub } = useBilling(currentTeamId);
 
   const [members, setMembers] = useState<Member[]>([
     { id: '1', name: 'Kate Ahurika', email: 'kate@brewandbake.com', role: 'owner', status: 'active' },
@@ -44,7 +47,10 @@ export default function TeamScreen() {
     { id: '4', name: 'David Chen', email: 'david@brewandbake.com', role: 'staff', status: 'invited' },
   ]);
 
-  const maxSeats = 5;
+  const maxSeats = sub?.seats || 5;
+  const currentPlanName = sub?.plan
+    ? sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1) + ' Plan'
+    : 'Starter Plan';
   const usedSeats = members.length;
   const seatRatio = usedSeats / maxSeats;
   const isSeatLimitReached = usedSeats >= maxSeats;
@@ -158,7 +164,7 @@ export default function TeamScreen() {
                 style={{ backgroundColor: theme.colors.primaryContainer }}
                 textStyle={{ color: theme.colors.onPrimaryContainer, fontSize: 12, fontWeight: '700' }}
               >
-                Starter Plan
+                {currentPlanName}
               </Chip>
             </View>
 
@@ -185,17 +191,19 @@ export default function TeamScreen() {
           </Card.Content>
         </Card>
 
-        {/* Member Roster List */}
+        {/* Member Roster List Header */}
         <View style={styles.rosterHeader}>
           <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
             Team Roster ({members.length})
           </Text>
           <Button
-            mode="text"
-            icon="plus"
+            mode="contained-tonal"
+            icon="account-plus-outline"
             compact
             onPress={handleOpenInvite}
             disabled={isSeatLimitReached}
+            style={styles.inviteButton}
+            labelStyle={{ fontWeight: '700', fontSize: 13 }}
           >
             Invite
           </Button>
@@ -245,7 +253,7 @@ export default function TeamScreen() {
 
                 <View style={styles.memberInfo}>
                   <View style={styles.nameRow}>
-                    <Text variant="titleSmall" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
+                    <Text variant="titleSmall" style={{ color: theme.colors.onSurface, fontWeight: '700' }} numberOfLines={1}>
                       {member.name}
                     </Text>
                     {isInvited && (
@@ -253,53 +261,60 @@ export default function TeamScreen() {
                         compact
                         icon="clock-outline"
                         style={[styles.statusChip, { backgroundColor: theme.colors.errorContainer }]}
-                        textStyle={{ color: theme.colors.onErrorContainer, fontSize: 10, fontWeight: '600' }}
+                        textStyle={{ color: theme.colors.onErrorContainer, fontSize: 10, fontWeight: '700' }}
                       >
                         Invited
                       </Chip>
                     )}
                   </View>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
                     {member.email}
                   </Text>
                 </View>
 
-                <Chip
-                  compact
-                  icon={isOwner ? 'shield-crown' : isManager ? 'shield-account' : 'account'}
-                  style={[
-                    styles.roleChip,
-                    {
-                      backgroundColor: isOwner
-                        ? theme.colors.primaryContainer
+                {/* Trailing Auto-Layout Slot: Role Badge + Action Slot */}
+                <View style={styles.trailingActionsFrame}>
+                  <Chip
+                    compact
+                    icon={isOwner ? 'shield-crown' : isManager ? 'shield-account' : 'account'}
+                    style={[
+                      styles.roleChip,
+                      {
+                        backgroundColor: isOwner
+                          ? theme.colors.primaryContainer
+                          : isManager
+                          ? theme.colors.secondaryContainer
+                          : theme.colors.surfaceVariant,
+                      },
+                    ]}
+                    textStyle={{
+                      fontSize: 11,
+                      fontWeight: '800',
+                      letterSpacing: 0.5,
+                      color: isOwner
+                        ? theme.colors.onPrimaryContainer
                         : isManager
-                        ? theme.colors.secondaryContainer
-                        : theme.colors.surfaceVariant,
-                    },
-                  ]}
-                  textStyle={{
-                    fontSize: 11,
-                    fontWeight: '700',
-                    color: isOwner
-                      ? theme.colors.onPrimaryContainer
-                      : isManager
-                      ? theme.colors.onSecondaryContainer
-                      : theme.colors.onSurfaceVariant,
-                  }}
-                >
-                  {member.role.toUpperCase()}
-                </Chip>
+                        ? theme.colors.onSecondaryContainer
+                        : theme.colors.onSurfaceVariant,
+                    }}
+                  >
+                    {member.role.toUpperCase()}
+                  </Chip>
 
-                {!isOwner && (
-                  <IconButton
-                    icon="account-remove-outline"
-                    size={20}
-                    iconColor={theme.colors.error}
-                    accessibilityLabel={`Remove ${member.name}`}
-                    onPress={() => setMemberToRemove(member)}
-                    style={{ margin: 0 }}
-                  />
-                )}
+                  {/* Fixed 36px action slot keeps all badges aligned */}
+                  <View style={styles.actionIconSlot}>
+                    {!isOwner ? (
+                      <IconButton
+                        icon="account-remove-outline"
+                        size={20}
+                        iconColor={theme.colors.error}
+                        accessibilityLabel={`Remove ${member.name}`}
+                        onPress={() => setMemberToRemove(member)}
+                        style={{ margin: 0 }}
+                      />
+                    ) : null}
+                  </View>
+                </View>
               </Card.Content>
             </Card>
           );
@@ -370,67 +385,12 @@ export default function TeamScreen() {
         </Dialog>
       </Portal>
 
-      {/* 2. Interactive Starter Plan & Quotas Dialog */}
-      <Portal>
-        <Dialog
-          visible={isPlanDetailsOpen}
-          onDismiss={() => setIsPlanDetailsOpen(false)}
-          style={{ backgroundColor: theme.colors.elevation.level3, borderRadius: radii.xl }}
-        >
-          <Dialog.Title style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
-            Starter Plan Overview
-          </Dialog.Title>
-          <Dialog.Content>
-            <Surface style={[styles.planInfoBox, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-                  Current Plan
-                </Text>
-                <Chip icon="check" compact textStyle={{ fontSize: 11, fontWeight: '700' }}>
-                  ACTIVE (FREE)
-                </Chip>
-              </View>
-              <Text variant="headlineSmall" style={{ fontWeight: '800', marginTop: 4, color: theme.colors.onSurfaceVariant }}>
-                $0 <Text variant="bodyMedium">/ month</Text>
-              </Text>
-            </Surface>
-
-            <View style={{ marginTop: spacing.md, gap: 8 }}>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
-                ✓ Includes up to <Text style={{ fontWeight: '700' }}>5 active seats</Text> ({usedSeats} used)
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
-                ✓ Shift scheduling & swap approval engine
-              </Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>
-                ✓ Real-time activity feed & notifications
-              </Text>
-            </View>
-
-            <Divider style={{ marginVertical: spacing.md }} />
-
-            <Text variant="titleSmall" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-              Need more seats? Pro Plan
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-              $29/month base + $5/seat for unlimited team size, custom quiet hours, and priority dispatch.
-            </Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setIsPlanDetailsOpen(false)}>Close</Button>
-            <Button
-              mode="contained-tonal"
-              icon="arrow-up-bold-circle-outline"
-              onPress={() => {
-                setIsPlanDetailsOpen(false);
-                snackbar.show('Pro Tier upgrade flow available via Settings > Billing');
-              }}
-            >
-              Upgrade to Pro
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      {/* 2. Interactive Subscription & Proration Manager Dialog */}
+      <SubscriptionManagerModal
+        visible={isPlanDetailsOpen}
+        teamId={currentTeamId}
+        onDismiss={() => setIsPlanDetailsOpen(false)}
+      />
 
       {/* 3. Success Invite Result Dialog with Deep Link */}
       <ResultDialog
@@ -495,6 +455,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
   },
+  inviteButton: {
+    borderRadius: radii.md,
+  },
   memberCard: {
     marginBottom: spacing.sm,
     borderRadius: radii.lg,
@@ -509,6 +472,7 @@ const styles = StyleSheet.create({
   memberInfo: {
     flex: 1,
     marginLeft: spacing.md,
+    justifyContent: 'center',
   },
   nameRow: {
     flexDirection: 'row',
@@ -519,9 +483,22 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
   },
+  trailingActionsFrame: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+  },
   roleChip: {
-    marginRight: 4,
     borderRadius: radii.sm,
+    minWidth: 84,
+    justifyContent: 'center',
+  },
+  actionIconSlot: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   planInfoBox: {
     padding: spacing.md,

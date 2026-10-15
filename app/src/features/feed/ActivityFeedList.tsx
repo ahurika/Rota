@@ -229,7 +229,6 @@ export function ActivityFeedList({ teamId }: ActivityFeedListProps) {
       <FlashList
         data={events}
         renderItem={renderItem}
-        estimatedItemSize={88}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         onEndReached={handleEndReached}

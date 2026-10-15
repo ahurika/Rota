@@ -15,7 +15,7 @@ export const options = {
 };
 
 const BASE = __ENV.BASE_URL || 'http://localhost:3000';
-const TEAM = __ENV.TEAM_ID || '3f5ad975-2152-4f57-9558-58a90ea3bda3';
+const TEAM = __ENV.TEAM_ID || '859a9351-a67e-4a0b-9ab4-c25ac5ef9d95';
 
 export function setup() {
   const loginRes = http.post(

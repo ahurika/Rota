@@ -6,7 +6,7 @@ import { AppTabBar } from '../../src/ui/components/AppTabBar';
 import { secureStorage } from '../../src/lib/secureStore';
 
 function tabIcon(on: string, off: string) {
-  return ({ color, focused }: { color: string; focused: boolean }) => (
+  return ({ color, focused }: { color: any; focused: boolean }) => (
     <Icon source={focused ? on : off} size={24} color={color} />
   );
 }

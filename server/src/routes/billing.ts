@@ -11,6 +11,7 @@ import { usersRepository } from '../repositories/usersRepository.js';
 const changeSubscriptionSchema = z.object({
   plan: z.enum(['starter', 'team', 'business']),
   seats: z.number().int().min(1),
+  simulatePayment: z.boolean().optional(),
 }).strict();
 
 export const billingRouter = new Hono<{ Variables: TeamVariables }>();
@@ -84,6 +85,7 @@ billingRouter.post(
       newPlan: parsed.data.plan as PlanId,
       newSeats: parsed.data.seats,
       idempotencyKey,
+      simulatePayment: parsed.data.simulatePayment,
     });
 
     return c.json(result, 200);

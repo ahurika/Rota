@@ -19,6 +19,8 @@ import { secureStorage } from '../../src/lib/secureStore';
 import { queryClient } from '../../src/query/queryClient';
 import { useUiStore } from '../../src/state/uiStore';
 import { useSettings, useUpdateSettings } from '../../src/features/settings/useSettings';
+import { useActiveTeam } from '../../src/features/teams/useActiveTeam';
+import { SubscriptionManagerModal } from '../../src/features/billing/SubscriptionManagerModal';
 import { ConfirmDialog } from '../../src/ui/components/ConfirmDialog';
 import { ScreenHeader } from '../../src/ui/components/ScreenHeader';
 import { spacing, radii } from '../../src/ui/tokens';
@@ -31,8 +33,10 @@ export default function SettingsScreen() {
   const setThemeMode = useUiStore((s) => s.setThemeMode);
 
   const { data: settings, isLoading } = useSettings();
+  const { currentTeamId } = useActiveTeam();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 
   // Sync theme from server settings if available
   useEffect(() => {
@@ -138,6 +142,35 @@ export default function SettingsScreen() {
             { value: 'dark', label: 'Dark', icon: 'moon-waning-crescent' },
           ]}
         />
+      </Surface>
+
+      {/* Plan & Billing Section */}
+      <Surface
+        style={[
+          styles.section,
+          {
+            backgroundColor: theme.colors.elevation.level1,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+        elevation={1}
+      >
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          Plan & Billing
+        </Text>
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: spacing.md }}>
+          Manage your subscription tier, seat limits & proration
+        </Text>
+
+        <Button
+          mode="contained-tonal"
+          icon="credit-card-outline"
+          onPress={() => setIsBillingModalOpen(true)}
+          style={{ borderRadius: radii.full, alignSelf: 'flex-start' }}
+          labelStyle={{ fontWeight: '700' }}
+        >
+          Manage Plan & Seats
+        </Button>
       </Surface>
 
       {/* Notifications Section */}
@@ -271,6 +304,13 @@ export default function SettingsScreen() {
         destructive
         onConfirm={handleLogoutConfirm}
         onDismiss={() => setIsLogoutDialogOpen(false)}
+      />
+
+      {/* Subscription Manager Modal */}
+      <SubscriptionManagerModal
+        visible={isBillingModalOpen}
+        teamId={currentTeamId}
+        onDismiss={() => setIsBillingModalOpen(false)}
       />
     </ScrollView>
     </View>
