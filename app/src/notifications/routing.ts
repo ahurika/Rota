@@ -9,6 +9,8 @@ const ALLOWED_ROUTE_PATTERNS = [
   /^\/billing$/,
   /^\/feed$/,
   /^\/settings$/,
+  /^\/home$/,
+  /^\/more$/,
 ];
 
 export function validateNotificationUrl(url: string | null | undefined): string | null {

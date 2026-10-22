@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { apiClient } from '../api/client';
 
@@ -23,6 +22,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 
   try {
+    const Notifications = await import('expo-notifications');
     // Check and request permissions
     const existing = (await Notifications.getPermissionsAsync()) as any;
     let isGranted = existing?.granted || existing?.status === 'granted';

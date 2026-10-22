@@ -38,7 +38,8 @@ export default function TabsLayout() {
           {...props}
           badges={{
             swaps: pendingSwapsCount,
-            settings: billingNeedsAttention,
+            feed: true, // Red dot indicator on Activity as in design
+            more: billingNeedsAttention,
           }}
         />
       )}
@@ -46,7 +47,16 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          href: null, // Hidden from tab bar; redirects to Schedule
+          href: null, // Hidden from tab bar; redirects to Home
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarLabel: 'Home',
+          tabBarIcon: tabIcon('home', 'home-outline'),
+          tabBarAccessibilityLabel: 'Home tab',
         }}
       />
       <Tabs.Screen
@@ -72,26 +82,29 @@ export default function TabsLayout() {
         options={{
           title: 'Activity',
           tabBarLabel: 'Activity',
-          tabBarIcon: tabIcon('bell', 'bell-outline'),
+          tabBarIcon: tabIcon('chart-line', 'chart-line'),
           tabBarAccessibilityLabel: 'Activity feed tab',
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'More',
+          tabBarLabel: 'More',
+          tabBarIcon: tabIcon('dots-horizontal', 'dots-horizontal'),
+          tabBarAccessibilityLabel: 'More options tab',
         }}
       />
       <Tabs.Screen
         name="team"
         options={{
-          title: 'Team',
-          tabBarLabel: 'Team',
-          tabBarIcon: tabIcon('account-group', 'account-group-outline'),
-          tabBarAccessibilityLabel: 'Team roster tab',
+          href: null, // Accessible via router.push('/(tabs)/team') or More tab
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarLabel: 'Settings',
-          tabBarIcon: tabIcon('cog', 'cog-outline'),
-          tabBarAccessibilityLabel: 'Settings tab',
+          href: null, // Accessible via router.push('/(tabs)/settings') or More tab
         }}
       />
     </Tabs>

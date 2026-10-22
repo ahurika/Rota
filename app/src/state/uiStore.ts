@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AppTab = 'shifts' | 'feed' | 'team' | 'settings';
+export type AppTab = 'home' | 'shifts' | 'swaps' | 'feed' | 'team' | 'settings' | 'more';
 
 interface UiState {
   selectedTab: AppTab;
